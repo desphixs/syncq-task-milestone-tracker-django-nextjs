@@ -1,3 +1,7 @@
+// Import our environment validator first to make sure all environment variables 
+// are present and correct before the application even begins rendering!
+import "./env";
+
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";

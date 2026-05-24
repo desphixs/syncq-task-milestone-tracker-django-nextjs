@@ -43,7 +43,7 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 
 # Application definition
-
+# This is a list of all active tools and packages in our Django server.
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,9 +51,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # We add the CORS headers package so Django knows how to append permission headers.
+    'corsheaders',
 ]
 
+# The Middleware acts like a series of security bouncers standing in a hallway.
+# When a browser request enters, it walks through each bouncer in order from top to bottom.
 MIDDLEWARE = [
+    # The CORS bouncer MUST stand right at the front door to check origins immediately!
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -127,3 +134,23 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# ==============================================================================
+# SECURITY, CORS & CSRF CONFIGURATIONS (Bouncer Rules)
+# ==============================================================================
+
+# 1. CORS Allowed Origins:
+# This tells our Django server which website domains are allowed to send requests.
+# We pull this comma-separated list directly from our .env file.
+CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
+
+# 2. CORS Allow Credentials:
+# This is crucial! It tells Django to allow the browser to send security credentials,
+# like our secure HttpOnly login session cookies, back and forth across different ports.
+CORS_ALLOW_CREDENTIALS = True
+
+# 3. CSRF Trusted Origins:
+# CSRF (Cross-Site Request Forgery) is a security feature that stops hackers from
+# making requests on your behalf. In modern Django, if your client app runs on a 
+# different port, you MUST explicitly tell Django to trust that client origin.
+CSRF_TRUSTED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
