@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     
     # We add the CORS headers package so Django knows how to append permission headers.
     'corsheaders',
+    
+    # Register our custom authentication application to handle email logins!
+    'userauths',
 ]
 
 # The Middleware acts like a series of security bouncers standing in a hallway.
@@ -154,3 +157,11 @@ CORS_ALLOW_CREDENTIALS = True
 # making requests on your behalf. In modern Django, if your client app runs on a 
 # different port, you MUST explicitly tell Django to trust that client origin.
 CSRF_TRUSTED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localhost:3000'])
+
+# ==============================================================================
+# CUSTOM AUTHENTICATION CONFIGURATIONS
+# ==============================================================================
+
+# We instruct Django to override its standard, default user database table and use 
+# our customized, email-based User model located inside our 'userauths' application!
+AUTH_USER_MODEL = 'userauths.User'
