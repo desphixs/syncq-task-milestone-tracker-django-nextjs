@@ -165,3 +165,14 @@ CSRF_TRUSTED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=['http://localho
 # We instruct Django to override its standard, default user database table and use 
 # our customized, email-based User model located inside our 'userauths' application!
 AUTH_USER_MODEL = 'userauths.User'
+
+# ==============================================================================
+# REST FRAMEWORK & EXCEPTION CONFIGURATIONS
+# ==============================================================================
+
+# Configure Django REST Framework to route all API exceptions through our centralized,
+# unified custom exception handler module instead of using the standard error layouts.
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'backend.exception_handler.custom_exception_handler',
+}
+
