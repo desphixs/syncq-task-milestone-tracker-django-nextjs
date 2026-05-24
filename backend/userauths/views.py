@@ -80,10 +80,13 @@ class LoginView(APIView):
             # Extract the refresh token string (the long-term token).
             refresh_token = str(refresh)
             
-            # 7. Build the JSON response body containing only the short-term access token.
+            # 7. Build the JSON response body containing both access and refresh tokens.
+            # Returning both allows our secure Next.js Server Actions (which execute privately on the server)
+            # to easily read the tokens from the JSON body and manage them in the client's browser cookies!
             response_body = {
                 "message": "Login successful.",
                 "access": access_token,
+                "refresh": refresh_token,
                 "user": {
                     "id": user.id,
                     "email": user.email,
@@ -91,10 +94,11 @@ class LoginView(APIView):
                 }
             }
             
-            # Initialize the DRF Response object.
+            # Initialize the DRF Response object with our structured body.
             response = Response(response_body, status=status.HTTP_200_OK)
             
             # 8. Nest the long-term refresh token inside a secure, HttpOnly, SameSite browser cookie.
+            # This is a helpful backup for clients who connect directly to Django without a BFF.
             response.set_cookie(
                 key='refresh_token',
                 value=refresh_token,
