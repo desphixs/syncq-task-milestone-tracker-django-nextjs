@@ -20,6 +20,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url({
     message: "NEXT_PUBLIC_API_URL must be a valid URL address (e.g. http://localhost:8000/api)"
   }),
+  NEXT_PUBLIC_GITHUB_CLIENT_ID: z.string().optional().default(""),
+  NEXT_PUBLIC_REDIRECT_URI: z.string().optional().default("http://localhost:3000/callback"),
 });
 
 // 2. Collect Active Variables
@@ -27,6 +29,8 @@ const envSchema = z.object({
 // process.env is the vault where Node.js stores all environment settings.
 const processEnv = {
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_GITHUB_CLIENT_ID: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
+  NEXT_PUBLIC_REDIRECT_URI: process.env.NEXT_PUBLIC_REDIRECT_URI,
 };
 
 // 3. Perform the Inspection Check

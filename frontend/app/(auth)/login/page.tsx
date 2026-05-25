@@ -9,7 +9,9 @@ import { z } from 'zod';
 import Link from 'next/link';
 
 // Import our secure Next.js Server Action for handling logins.
-import { loginAction } from '../actions/auth';
+import { loginAction } from '@/app/actions/auth';
+// Import our type-safe environment configurations to safely read client IDs.
+import { env } from '@/app/env';
 
 // Import modern icons from lucide-react.
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, Shield, Sparkles, KeyRound } from 'lucide-react';
@@ -158,10 +160,29 @@ export default function LoginPage() {
   };
 
   /**
-   * SOCIAL LOGIN DISPATCHER (RAW UI STUB)
+   * SOCIAL LOGIN DISPATCHER
+   * 
+   * Analogy:
+   * Think of this like buying a train ticket to a neighboring county.
+   * Clicking the button doesn't log you in directly; it routes your browser to the partner county
+   * desk (GitHub's Authorization portal), passing our unique Club Passport ID (Client ID) and a return address.
+   * Once you are authenticated there, GitHub flies you back to our custom return desk callback url.
    */
   const handleSocialLogin = (provider: 'google' | 'github') => {
-    toast.info(`Redirecting to ${provider === 'google' ? 'Google' : 'GitHub'} social login handshake...`);
+    if (provider === 'github') {
+      const clientId = env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
+      const redirectUri = `${env.NEXT_PUBLIC_REDIRECT_URI}/github`;
+      
+      if (!clientId) {
+        toast.error("GitHub Client ID is not configured in the environment.");
+        return;
+      }
+      
+      // Dispatch redirect to GitHub OAuth portal.
+      window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
+    } else {
+      toast.info("Google OAuth is not fully configured in this phase.");
+    }
   };
 
   return (

@@ -166,6 +166,84 @@ export async function loginAction(payload: any) {
 }
 
 /**
+ * SOCIAL LOGIN SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like presenting a VIP check-in card from GitHub to our server clerk.
+ * The server clerk takes this checked card, carries it securely behind the scenes to our Django database,
+ * retrieves our certified tokens (access & refresh), stores them in HttpOnly cookies in the browser's private vault,
+ * and confirms that the visitor is officially checked in!
+ */
+export async function socialLoginAction(provider: string, code: string) {
+    try {
+        // 1. Send a POST request to our custom Django social endpoint.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/${provider}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ code }),
+        });
+
+        // 2. Parse the returned JSON response body.
+        const data = await response.json();
+
+        // 3. Evaluate if the login handshake succeeded.
+        if (response.ok) {
+            // Retrieve and await the Next.js cookie store helper.
+            const cookieStore = await cookies();
+
+            // Extract access and refresh tokens from the body.
+            // Our Django view returns them inside the 'data' key as data.data.access / data.data.refresh!
+            const accessToken = data.data?.access;
+            const refreshToken = data.data?.refresh;
+
+            if (!accessToken) {
+                return {
+                    success: false,
+                    message: "Access token is missing from authentication response.",
+                };
+            }
+
+            // Set the access token cookie inside the secure browser context.
+            cookieStore.set('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60, // 1 hour
+            });
+
+            // Set the refresh token cookie.
+            if (refreshToken) {
+                cookieStore.set('refresh_token', refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
+                    maxAge: 7 * 24 * 60 * 60, // 7 days
+                });
+            }
+
+            return {
+                success: true,
+                message: "Social login successful.",
+            };
+        } else {
+            return {
+                success: false,
+                message: data.error || data.message || "Failed to log in with social provider.",
+            };
+        }
+    } catch (error: any) {
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
+/**
  * LOGOUT SERVER ACTION
  * 
  * Analogy:

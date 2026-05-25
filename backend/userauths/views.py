@@ -154,7 +154,7 @@ class GitHubLogin(APIView):
             'code': code,
             'client_id': settings.SOCIAL_AUTH['github']['client_id'],
             'client_secret': settings.SOCIAL_AUTH['github']['client_secret'],
-            'redirect_uri': 'http://localhost:3000/api/auth/callback/github',
+            'redirect_uri': 'http://localhost:3000/callback/github',
         }, headers={'Accept': 'application/json'}) # GitHub needs this header to send JSON back
 
         # If GitHub's server returns a non-200 failure code, report the handshake error.

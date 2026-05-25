@@ -9,7 +9,7 @@ import { z } from 'zod';
 import Link from 'next/link';
 
 // Import our secure Next.js Server Action for handling registrations.
-import { registerAction } from '../actions/auth';
+import { registerAction } from '@/app/actions/auth';
 
 // Import modern icons from lucide-react.
 import { Mail, Lock, Eye, EyeOff, Loader2, User, ArrowRight, ShieldCheck } from 'lucide-react';
