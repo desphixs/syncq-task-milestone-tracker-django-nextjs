@@ -4,6 +4,8 @@
 
 // Import our server-side cookie manager utility from Next.js to read and write cookies.
 import { cookies } from 'next/headers';
+// Import next navigation redirect utility to route pages server-side.
+import { redirect } from 'next/navigation';
 // Import our type-safe, validated environment settings to safely locate our Django backend URL.
 import { env } from '../env';
 
@@ -162,3 +164,25 @@ export async function loginAction(payload: any) {
         };
     }
 }
+
+/**
+ * LOGOUT SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like returning your room keycards at checkout.
+ * You hand the access and refresh token keycards back to the server clerk,
+ * who deletes them immediately from the browser vault, making sure your
+ * session is officially cleared, and walks you out of the secure compound back to the gate.
+ */
+export async function logoutAction() {
+  // Await and retrieve the server-side cookie container.
+  const cookieStore = await cookies();
+
+  // Delete the secure tokens from the browser context.
+  cookieStore.delete('access_token');
+  cookieStore.delete('refresh_token');
+
+  // Reroute the user instantly to the login endpoint.
+  redirect('/login');
+}
+

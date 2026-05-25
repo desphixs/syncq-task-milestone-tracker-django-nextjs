@@ -1,29 +1,15 @@
 // Import the default image loader from Next.js to handle logos or graphics securely.
 import Image from "next/image";
+// Import our new dedicated, server-first Header component!
+import Header from "@/components/Header";
 
 // The Home function represents the main entry page of our application.
 // This is a "Server Component" by default, which means it pre-renders on the server for speed!
 export default function Home() {
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col justify-between font-sans transition-colors duration-300">
-            {/* HEADER: A sleek, modern navbar at the top of the page */}
-            <header className="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50">
-                <div className="flex items-center gap-3">
-                    {/* Logo illustration */}
-                    <div className="w-10 h-10 rounded-xl bg-black dark:bg-white flex items-center justify-center font-bold text-white dark:text-black text-xl shadow-md">A</div>
-                    <span className="font-semibold text-lg text-zinc-900 dark:text-zinc-50 tracking-tight">AuthForge Boilerplate</span>
-                </div>
-
-                {/* Simple external links for students to reference project resources */}
-                <nav className="flex items-center gap-6 text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                    <a href="http://127.0.0.1:8000/api/docs/" target="_blank" rel="noopener noreferrer" className="hover:text-black dark:hover:text-white transition-colors">
-                        API Documentation
-                    </a>
-                    <a href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer" className="hover:text-black dark:hover:text-white transition-colors">
-                        Next.js Docs
-                    </a>
-                </nav>
-            </header>
+            {/* Render the dynamically checked, high-aesthetic Header server component at the top */}
+            <Header />
 
             {/* HERO SECTION: The core value proposition of our boilerplate */}
             <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center gap-16 justify-center">
