@@ -216,3 +216,88 @@ class GitHubLogin(APIView):
             }
         }, status=status.HTTP_200_OK)
 
+
+# Define the custom Google OAuth authentication endpoint.
+class GoogleLogin(APIView):
+    """
+    GOOGLE OAUTH LOGIN HANDSHAKE VIEW
+    
+    Analogy:
+    Think of this view like a border control customs desk for visitors who carry a Google diplomatic passport.
+    Instead of forcing the guest to fill out a standard local registration form and create a brand-new local password
+    (which would be standard email & password signup), they simply present their Google authorization ticket code
+    (the temporary oauth code). The bouncer verifies this ticket directly with Google's central database (token exchange API)
+    to confirm the guest's credentials. If Google says they are verified, we get their profile data, match or
+    create a local user filing card for them in our system, and issue our own site's VIP access tokens!
+    """
+    
+    # Allow any unauthenticated guest user to initialize the social login check.
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # 1. Retrieve the temporary oauth exchange code from the client request payload.
+        code = request.data.get('code')
+        if not code:
+            # If the code is missing from the payload, raise an AuthenticationFailed error.
+            raise AuthenticationFailed("Temporary authorization code is required.")
+
+        # Step 2: Exchange the temporary Google code for a secure Google Access Token.
+        # We dispatch a secure, server-to-server POST request to Google's token exchange endpoint.
+        token_res = http_requests.post('https://oauth2.googleapis.com/token', data={
+            'code': code,
+            'client_id': settings.SOCIAL_AUTH['google']['client_id'],
+            'client_secret': settings.SOCIAL_AUTH['google']['client_secret'],
+            'redirect_uri': 'http://localhost:3000/callback/google', # Must match the client callback path
+            'grant_type': 'authorization_code',
+        })
+
+        # If Google's server returns a non-200 failure code, report the handshake error.
+        if token_res.status_code != 200:
+            raise AuthenticationFailed("Failed to exchange authentication code with Google.")
+
+        # Extract the secure access token from Google's JSON response body.
+        access_token = token_res.json().get('access_token')
+        if not access_token:
+            raise AuthenticationFailed("Invalid authorization token returned from Google.")
+
+        # Step 3: Use the Google access token to ask for the user's basic profile details (Name, Email, etc.).
+        userinfo_res = http_requests.get(
+            'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers={'Authorization': f'Bearer {access_token}'}
+        )
+
+        # If we failed to retrieve profile details, raise an AuthenticationFailed error.
+        if userinfo_res.status_code != 200:
+            raise AuthenticationFailed("Failed to fetch user profile details from Google.")
+
+        # Parse the returned profile JSON data into an active dictionary.
+        userinfo = userinfo_res.json()
+        email = userinfo.get('email')
+        
+        # If no email address is returned in the Google profile, raise an authentication error.
+        if not email:
+            raise AuthenticationFailed("No email address returned from your Google account.")
+
+        # Step 4: Sniff out the full name of the user from Google's profile.
+        # We try to get the 'name' field first. If missing, we combine given_name (first) and family_name (last).
+        full_name = userinfo.get('name') or f"{userinfo.get('given_name', '')} {userinfo.get('family_name', '')}".strip() or ''
+
+        # Step 5: Log them in or automatically sign them up if they don't have an account yet!
+        # We query our custom User model's database tables using objects.get_or_create.
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={'full_name': full_name}
+        )
+
+        # Step 6: Issue our site's standard SimpleJWT Refresh and Access tokens to establish their session!
+        refresh = RefreshToken.for_user(user)
+
+        # 7. Return the authentic JWT token credentials to the calling frontend callback client.
+        return Response({
+            'data': {
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+            }
+        }, status=status.HTTP_200_OK)
+
+

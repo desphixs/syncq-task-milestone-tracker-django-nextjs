@@ -185,6 +185,11 @@ SOCIAL_AUTH = {
         # We load these secure credentials dynamically from our environment files.
         'client_id': env('GITHUB_CLIENT_ID', default=''),
         'client_secret': env('GITHUB_CLIENT_SECRET', default=''),
+    },
+    'google': {
+        # We load these secure credentials dynamically from our environment files.
+        'client_id': env('GOOGLE_CLIENT_ID', default=''),
+        'client_secret': env('GOOGLE_CLIENT_SECRET', default=''),
     }
 }
 
