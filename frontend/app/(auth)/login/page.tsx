@@ -128,7 +128,7 @@ export default function LoginPage() {
       // 3. Fire the requestMagicLinkAction Server Action with the validated form data.
       const result = await requestMagicLinkAction(values);
 
-      // 4. Check if our secure helper successfully connected to Django and generated the token.
+      // 4. Check if our secure helper successfully connected to Django and generated the token
       if (result.success) {
         // Display a delightful checkmark toast message.
         toast.success(result.message || 'Magic link dispatched to your inbox!', { id: toastId });
