@@ -36,3 +36,27 @@ def send_welcome_email(to_email: str, full_name: str = '') -> None:
         html_message=html_message,
         fail_silently=False,
     )
+
+def send_magic_link_email(to_email: str, magic_link: str, full_name: str = '') -> None:
+    """
+    Sends a magic link email to the user.
+    The link contains a secure, time-restricted token that logs them in instantly when clicked.
+    """
+    subject = 'Your Sign-In Link for Staqed'
+    
+    context = {
+        'name': full_name or 'there',
+        'magic_link': magic_link
+    }
+    
+    html_message = render_to_string('emails/magic_link.html', context)
+    plain_message = strip_tags(html_message)
+
+    send_mail(
+        subject=subject,
+        message=plain_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[to_email],
+        html_message=html_message,
+        fail_silently=False,
+    )

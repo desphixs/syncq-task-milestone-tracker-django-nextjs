@@ -5,6 +5,8 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 # Import standard exceptions from DRF to handle secure error routing.
 from rest_framework.exceptions import AuthenticationFailed
+# Import Django's cryptographic signing tools.
+from django.core.signing import TimestampSigner
 
 # Import requests as http_requests to manage standard client-side API exchanges.
 import requests as http_requests
@@ -325,5 +327,59 @@ class GoogleLogin(APIView):
                 'refresh': str(refresh),
             }
         }, status=status.HTTP_200_OK)
+
+
+class RequestMagicLinkView(APIView):
+    """
+    REQUEST MAGIC LINK VIEW
+    
+    Analogy:
+    Think of this view like requesting a temporary, security-stamped VIP guest card
+    for our hotel club lobby. Instead of asking you to remember a master key (your password),
+    you provide your registered email. The bouncer prints a custom visa voucher containing
+    a cryptographic stamp that is bound to your identity and is set to self-destruct (expire)
+    after 15 minutes! The voucher is dropped straight into your email inbox.
+    """
+    # Allow any guest/unauthenticated user to request a magic link.
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # 1. Retrieve the email address from the incoming request payload.
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response({'error': 'Email address is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Check if the user exists and is active.
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # We return a 404 response if the email is not registered in our database.
+            return Response({'error': 'No account found with this email address.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response({'error': 'This account is inactive. Please contact support.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Leverage Django's internal cryptographic signing engine (TimestampSigner) to generate a secure signature.
+        # This produces a time-restricted, tamper-proof signature containing the user's email.
+        signer = TimestampSigner()
+        token = signer.sign(user.email)
+
+        # 4. Construct the full single-use authentication URL targeting our frontend.
+        frontend_url = settings.FRONTEND_URL
+        magic_link = f"{frontend_url}/auth/magic-link?token={token}"
+
+        # 5. Dispatch the email with the secure hyperlink.
+        try:
+            from .emails import send_magic_link_email
+            send_magic_link_email(
+                to_email=email,
+                magic_link=magic_link,
+                full_name=user.full_name
+            )
+        except Exception:
+            return Response({'error': 'Failed to send magic link. Please try again later.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Return a success report payload to the frontend.
+        return Response({'message': 'Magic link sent! Check your inbox.'}, status=status.HTTP_200_OK)
 
 

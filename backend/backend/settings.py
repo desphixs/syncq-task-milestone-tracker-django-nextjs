@@ -200,8 +200,11 @@ SOCIAL_AUTH = {
 # EMAIL SETTINGS (django-anymail + Resend)
 # ==============================================================================
 
-# Route all Django emails through Resend
-EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+# Route Django emails through Resend if configured, otherwise print to console for local inspection
+if env('RESEND_API_KEY', default=''):
+    EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # The "from" address shown to users in their inbox
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='Staqed <noreply@staqed.com>')
