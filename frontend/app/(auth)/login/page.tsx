@@ -9,7 +9,7 @@ import { z } from 'zod';
 import Link from 'next/link';
 
 // Import our secure Next.js Server Action for handling logins.
-import { loginAction } from '@/app/actions/auth';
+import { loginAction, requestMagicLinkAction } from '@/app/actions/auth';
 // Import our type-safe environment configurations to safely read client IDs.
 import { env } from '@/app/env';
 
@@ -110,20 +110,41 @@ export default function LoginPage() {
   };
 
   /**
-   * MAGIC LINK REQUEST (RAW UI STUB)
+   * MAGIC LINK REQUEST
    * 
-   * Simulates the magic link workflow visually on the client side.
+   * Analogy:
+   * When you click "Send Magic Link", our code hands your email address to the
+   * requestMagicLinkAction (our postman). The postman takes it to the backend,
+   * validates that you have an account, generates the cryptographic signature,
+   * logs the email in the console, and returns back with a success message!
    */
   const onMagicLinkRequest = async (values: EmailOnlyFormValues) => {
+    // 1. Set the submitting/loading state to true so the user cannot click twice or spam the button.
     setIsSubmitting(true);
-    const toastId = toast.loading('Sending secure magic link link...');
+    // 2. Trigger a beautiful, premium loading toast to tell the user we are dispatching their magic link.
+    const toastId = toast.loading('Sending secure magic link...');
     
-    // Simulate API delay.
-    setTimeout(() => {
-      toast.success('Magic link dispatched to your inbox!', { id: toastId });
-      setMagicLinkSent(true);
+    try {
+      // 3. Fire the requestMagicLinkAction Server Action with the validated form data.
+      const result = await requestMagicLinkAction(values);
+
+      // 4. Check if our secure helper successfully connected to Django and generated the token.
+      if (result.success) {
+        // Display a delightful checkmark toast message.
+        toast.success(result.message || 'Magic link dispatched to your inbox!', { id: toastId });
+        // Update state to render the elegant check-email graphic screen.
+        setMagicLinkSent(true);
+      } else {
+        // If the email was not found or validation failed, show the exact error message.
+        toast.error(result.message || 'Failed to authenticate using magic link.', { id: toastId });
+      }
+    } catch (err: any) {
+      // Catch and report any network connection issues.
+      toast.error('A network connection error occurred.', { id: toastId });
+    } finally {
+      // 5. Always turn off the submitting loader so the interface returns to an interactive state.
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   /**

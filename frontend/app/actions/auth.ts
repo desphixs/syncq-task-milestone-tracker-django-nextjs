@@ -244,6 +244,49 @@ export async function socialLoginAction(provider: string, code: string) {
 }
 
 /**
+ * REQUEST MAGIC LINK SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like requesting a VIP key card from the hotel receptionist.
+ * You give them your email, and they check if you are registered in the hotel system.
+ * If you are, they generate a secure, temporary key link, put it in an envelope, and send it to your email inbox.
+ * You don't get the key immediately in your hand, but you are told to check your inbox!
+ */
+export async function requestMagicLinkAction(payload: { email: string }) {
+    try {
+        // 1. Send an asynchronous POST request to our secure Django magic link request endpoint.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/magic-link/request/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        // 2. Parse the returned JSON response body.
+        const data = await response.json();
+
+        // 3. Evaluate if the request was successful.
+        if (response.ok) {
+            return {
+                success: true,
+                message: data.message || 'Magic link successfully sent to your email.',
+            };
+        } else {
+            return {
+                success: false,
+                message: data.message || 'Failed to generate magic link. Please ensure your email is correct.',
+            };
+        }
+    } catch (error: any) {
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
+/**
  * LOGOUT SERVER ACTION
  * 
  * Analogy:
