@@ -837,8 +837,10 @@ class DeleteAccountView(APIView):
             # Scramble the email using a unique, randomized ID code to prevent uniqueness collisions.
             user.email = f"deleted_{uuid.uuid4().hex[:12]}@staqed.internal"
             
+            import secrets  # Import Python's secure random generation module
+            
             # Change the password to a randomized string that is discarded, locking the user out forever.
-            user.set_password(User.objects.make_random_password())
+            user.set_password(secrets.token_hex(32))
             
             # Deactivate the user so they can never authenticate or request fresh codes again.
             user.is_active = False

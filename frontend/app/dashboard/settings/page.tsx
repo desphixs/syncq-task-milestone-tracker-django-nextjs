@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardWrapper from '@/components/dashboard/DashboardWrapper';
 import { 
   Settings, User, Shield, Trash2, 
@@ -10,7 +11,8 @@ import {
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 // Import our secure profile server actions to fetch and update details
-import { getUserProfileAction, updateUserProfileAction, getCloudinarySignatureAction } from '@/app/actions/auth';
+import { getUserProfileAction, updateUserProfileAction, getCloudinarySignatureAction, deleteAccountAction } from '@/app/actions/auth';
+
 
 type Tab = 'general' | 'profile' | 'password' | 'delete';
 
@@ -640,13 +642,41 @@ function PasswordSettingsTab() {
 /* ============================================================================== */
 function DeleteSettingsTab() {
   const [confirmText, setConfirmText] = useState('');
+  const [password, setPassword] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
+    // 1. Safety verification string check
     if (confirmText.toLowerCase() !== 'delete') {
-      toast.error("Please enter the word 'delete' to proceed.");
+      toast.error("Please type the word 'delete' to proceed.");
       return;
     }
-    toast.error('Self-destruct database cascade sequence complete (Mock UI)!');
+
+    // 2. Password confirmation parameter validation
+    if (!password) {
+      toast.error("Please enter your current password to authorize this action.");
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      // 3. Dispatch secure backend deletion server action
+      const res = await deleteAccountAction(password);
+
+      if (res.success) {
+        toast.success(res.message || "Account successfully closed.");
+        // Redirect completely to login page to verify cookie purging
+        window.location.href = '/login';
+      } else {
+        toast.error(res.message || "Failed to delete account.");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "An unexpected error occurred during account deletion.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -666,24 +696,52 @@ function DeleteSettingsTab() {
       </div>
 
       <div className="max-w-md space-y-4 pt-2">
+        {/* Safety phrase check */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-            Type <span className="font-extrabold text-red-500">delete</span> to authorize deletion
+            Type <span className="font-extrabold text-red-500">delete</span> to confirm
           </label>
           <input 
             type="text" 
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
+            disabled={isDeleting}
             placeholder="delete"
-            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/30 outline-none font-medium"
+            className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/30 outline-none font-medium disabled:opacity-50"
           />
+        </div>
+
+        {/* Secure password confirmation field */}
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Confirm Current Password</label>
+          <div className="relative group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-zinc-950 dark:group-focus-within:text-white transition-colors">
+              <Lock size={16} />
+            </div>
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isDeleting}
+              placeholder="••••••••"
+              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 py-2.5 pl-11 pr-4 text-sm transition-all focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/30 outline-none disabled:opacity-50"
+            />
+          </div>
         </div>
 
         <button 
           onClick={handleDelete}
-          className="w-full px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-750 text-white text-xs font-bold shadow-md cursor-pointer transition-colors"
+          disabled={isDeleting}
+          className="w-full px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-750 disabled:bg-red-400 text-white text-xs font-bold shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
         >
-          Authorize Account Melt Down
+          {isDeleting ? (
+            <>
+              <Loader2 className="animate-spin animate-infinite duration-1000" size={14} />
+              <span>Scrubbing Data...</span>
+            </>
+          ) : (
+            <span>Authorize Account Melt Down</span>
+          )}
         </button>
       </div>
     </div>

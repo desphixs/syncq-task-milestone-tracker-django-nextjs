@@ -739,3 +739,69 @@ export async function getCloudinarySignatureAction() {
         };
     }
 }
+
+
+/**
+ * DELETE ACCOUNT SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like walking up to the bank cashier to close your entire safety vault.
+ * 1. The cashier asks for your VIP identity badge (retrieve the access token from cookies).
+ * 2. They ask you to type in your private confirmation key (the password).
+ * 3. If verified, the cashier sends the destroy request to the Django ledger vault.
+ * 4. Once Django confirms, the cashier immediately throws your physical key badges directly into the furnace
+ *    (cookieStore.delete('access_token') and cookieStore.delete('refresh_token')), completely checking you out!
+ */
+export async function deleteAccountAction(password: string) {
+    try {
+        // 1. Retrieve the authenticated user's access token securely from HttpOnly browser cookies.
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
+
+        // 2. Reject request immediately if the user is unauthenticated.
+        if (!accessToken) {
+            return {
+                success: false,
+                message: "Authentication credentials were not provided. Please log in.",
+            };
+        }
+
+        // 3. Dispatch secure POST request to the Django account deletion view endpoint.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/account/delete/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                // Authenticate request using standard SimpleJWT Bearer tokens.
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ password }),
+        });
+
+        // 4. Parse the returned JSON response body.
+        const data = await response.json();
+
+        // 5. Check if the deletion succeeded.
+        if (response.ok) {
+            // Wipe active authentication cookies from the client browser context upon complete success.
+            cookieStore.delete('access_token');
+            cookieStore.delete('refresh_token');
+
+            return {
+                success: true,
+                message: data.message || "Your account has been successfully closed.",
+            };
+        } else {
+            return {
+                success: false,
+                message: data.error || data.message || "Failed to delete account. Please verify your password.",
+            };
+        }
+    } catch (error: any) {
+        // 6. Capture unexpected connection drops.
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
