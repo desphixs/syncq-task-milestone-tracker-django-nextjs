@@ -556,3 +556,126 @@ export async function saveThemeAction(theme: string) {
         };
     }
 }
+
+/**
+ * GET USER PROFILE ACTION
+ * 
+ * Analogy:
+ * Think of this action like a secure security guard retrieve operation.
+ * The guard checks the client's access badge (access_token) stored securely in HttpOnly cookies,
+ * walks into the high-security members office (Django backend /profile/ endpoint),
+ * grabs the member's profile file (email, name, bio, notification preferences),
+ * and returns it safely to the client settings tab!
+ */
+export async function getUserProfileAction() {
+    try {
+        // 1. Securely fetch the user's access token from HttpOnly cookies in the browser.
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
+
+        // 2. If no token is found, return an unauthorized status so the UI can redirect or block.
+        if (!accessToken) {
+            return {
+                success: false,
+                message: "Authentication credentials were not provided. Please log in.",
+            };
+        }
+
+        // 3. Dispatch a secure GET request targeting our backend Django profile view controller.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/profile/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                // Attach the access token inside standard Authorization Bearer header.
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            // Disable aggressive caching to ensure we always fetch fresh, active database details!
+            cache: 'no-store',
+        });
+
+        // 4. Parse the returned JSON response body.
+        const data = await response.json();
+
+        // 5. Evaluate if the request was successfully processed (status code 200 OK).
+        if (response.ok) {
+            return {
+                success: true,
+                message: "Profile retrieved successfully.",
+                user: data,
+            };
+        } else {
+            return {
+                success: false,
+                message: data.message || data.detail || "Failed to retrieve user profile.",
+            };
+        }
+    } catch (error: any) {
+        // 6. Handle unexpected network drops or backend server offline failures.
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
+/**
+ * UPDATE USER PROFILE ACTION
+ * 
+ * Analogy:
+ * Think of this action like a secure delivery courier.
+ * It takes the profile update package containing the user's new name, biography, or preferences,
+ * checks their access token key card in the cookie drawer,
+ * and securely dispatches it to the Django server to perform a clean database update.
+ * Once Django commits the changes and responds, the courier brings the fresh profile details back to the UI!
+ */
+export async function updateUserProfileAction(payload: any) {
+    try {
+        // 1. Fetch the user's secure access token from HttpOnly browser cookies.
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
+
+        // 2. If no token is found, return an error block.
+        if (!accessToken) {
+            return {
+                success: false,
+                message: "Authentication credentials were not provided. Please log in.",
+            };
+        }
+
+        // 3. Send a secure PUT request containing our profile payload back to Django.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/profile/`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                // Authenticate the call using SimpleJWT Bearer token standard.
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            // Convert our updated user data payload into a standard JSON string.
+            body: JSON.stringify(payload),
+        });
+
+        // 4. Parse the returned JSON response.
+        const data = await response.json();
+
+        // 5. Check if the update succeeded on our backend.
+        if (response.ok) {
+            return {
+                success: true,
+                message: data.message || "Profile updated successfully.",
+                user: data.user,
+            };
+        } else {
+            return {
+                success: false,
+                message: data.message || "Failed to update profile. Please verify your inputs.",
+                errors: data, // Pass validation errors back if they exist
+            };
+        }
+    } catch (error: any) {
+        // 6. Capture unexpected connection faults.
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}

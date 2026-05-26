@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardWrapper from '@/components/dashboard/DashboardWrapper';
 import { 
   Settings, User, Shield, Trash2, 
@@ -8,8 +8,20 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+// Import our secure profile server actions to fetch and update details
+import { getUserProfileAction, updateUserProfileAction } from '@/app/actions/auth';
 
 type Tab = 'general' | 'profile' | 'password' | 'delete';
+
+// Define type configuration for profile state parameters
+interface UserProfileData {
+  email: string;
+  full_name: string;
+  bio: string;
+  avatar: string;
+  email_notification: boolean;
+  public_profile: boolean;
+}
 
 /**
  * DASHBOARD SETTINGS PAGE
@@ -25,6 +37,10 @@ type Tab = 'general' | 'profile' | 'password' | 'delete';
 export default function SettingsPage() {
   // State to track which settings tab is currently active.
   const [activeTab, setActiveTab] = useState<Tab>('general');
+  // State to store retrieved secure user profile details
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  // State to track loading status upon mount
+  const [isLoading, setIsLoading] = useState(true);
 
   // List of tabs containing label configurations and Lucide React icons.
   const tabs = [
@@ -33,6 +49,50 @@ export default function SettingsPage() {
     { id: 'password', label: 'Change Password', icon: <Shield size={18} /> },
     { id: 'delete', label: 'Delete Account', icon: <Trash2 size={18} className="text-red-500" /> },
   ];
+
+  // Helper method to synchronize/fetch latest user profile state from Django
+  const fetchProfileDetails = async () => {
+    const res = await getUserProfileAction();
+    if (res.success && res.user) {
+      setProfile(res.user);
+    } else {
+      toast.error(res.message || "Failed to load profile details.");
+    }
+  };
+
+  // Fetch active profile records immediately on mount
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      await fetchProfileDetails();
+      setIsLoading(false);
+    }
+    loadData();
+  }, []);
+
+  // Display highly aesthetic minimalist skeleton during secure server fetch operations
+  if (isLoading) {
+    return (
+      <DashboardWrapper>
+        <div className="max-w-4xl space-y-8 animate-pulse">
+          <div>
+            <div className="h-9 w-48 bg-zinc-200 dark:bg-zinc-800 rounded-lg" />
+            <div className="h-4 w-96 bg-zinc-100 dark:bg-zinc-900 rounded-md mt-2" />
+          </div>
+          <div className="flex border-b border-zinc-200 dark:border-zinc-800 gap-6 py-4">
+            <div className="h-6 w-20 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <div className="h-6 w-28 bg-zinc-200 dark:bg-zinc-800 rounded" />
+            <div className="h-6 w-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+          </div>
+          <div className="space-y-6 py-4">
+            <div className="h-6 w-48 bg-zinc-200 dark:bg-zinc-800 rounded animate-bounce" />
+            <div className="h-28 w-full bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800" />
+            <div className="h-28 w-full bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-dashed border-zinc-200 dark:border-zinc-800" />
+          </div>
+        </div>
+      </DashboardWrapper>
+    );
+  }
 
   return (
     <DashboardWrapper>
@@ -67,8 +127,12 @@ export default function SettingsPage() {
 
         {/* ACTIVE TAB CONTENT ROUTER */}
         <div className="py-4">
-          {activeTab === 'general' && <GeneralSettingsTab />}
-          {activeTab === 'profile' && <ProfileSettingsTab />}
+          {activeTab === 'general' && profile && (
+            <GeneralSettingsTab profile={profile} onRefresh={fetchProfileDetails} />
+          )}
+          {activeTab === 'profile' && profile && (
+            <ProfileSettingsTab profile={profile} onRefresh={fetchProfileDetails} />
+          )}
           {activeTab === 'password' && <PasswordSettingsTab />}
           {activeTab === 'delete' && <DeleteSettingsTab />}
         </div>
@@ -81,9 +145,44 @@ export default function SettingsPage() {
 /* ============================================================================== */
 /* TAB: GENERAL SETTINGS */
 /* ============================================================================== */
-function GeneralSettingsTab() {
-  const [emailNotify, setEmailNotify] = useState(true);
-  const [publicProfile, setPublicProfile] = useState(false);
+interface GeneralSettingsTabProps {
+  profile: UserProfileData;
+  onRefresh: () => Promise<void>;
+}
+
+function GeneralSettingsTab({ profile, onRefresh }: GeneralSettingsTabProps) {
+  // State to track transition loading indicators when committing checkbox state
+  const [isUpdatingNotify, setIsUpdatingNotify] = useState(false);
+  const [isUpdatingPublic, setIsUpdatingPublic] = useState(false);
+
+  // Securely update notification settings inside active DB profile record
+  const handleToggleEmail = async (checked: boolean) => {
+    setIsUpdatingNotify(true);
+    // Dispatch PUT request with partial keys to preserve name and bio records
+    const res = await updateUserProfileAction({ email_notification: checked });
+    if (res.success) {
+      toast.success(`Notifications ${checked ? 'activated' : 'deactivated'}`);
+      // Instruct parent dashboard component to fetch latest DB state
+      await onRefresh();
+    } else {
+      toast.error(res.message || "Failed to update notification settings.");
+    }
+    setIsUpdatingNotify(false);
+  };
+
+  // Securely update profile visibility settings inside active DB profile record
+  const handleTogglePublic = async (checked: boolean) => {
+    setIsUpdatingPublic(true);
+    // Dispatch PUT request targeting public visibility flag
+    const res = await updateUserProfileAction({ public_profile: checked });
+    if (res.success) {
+      toast.success(`Profile visibility: ${checked ? 'Public' : 'Private'}`);
+      await onRefresh();
+    } else {
+      toast.error(res.message || "Failed to update profile visibility.");
+    }
+    setIsUpdatingPublic(false);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -105,11 +204,9 @@ function GeneralSettingsTab() {
             <input 
               type="checkbox" 
               className="sr-only peer" 
-              checked={emailNotify} 
-              onChange={(e) => {
-                setEmailNotify(e.target.checked);
-                toast.success(`Notifications ${e.target.checked ? 'activated' : 'deactivated'}`);
-              }}
+              checked={profile.email_notification} 
+              disabled={isUpdatingNotify}
+              onChange={(e) => handleToggleEmail(e.target.checked)}
             />
             <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-black"></div>
           </label>
@@ -128,11 +225,9 @@ function GeneralSettingsTab() {
             <input 
               type="checkbox" 
               className="sr-only peer" 
-              checked={publicProfile} 
-              onChange={(e) => {
-                setPublicProfile(e.target.checked);
-                toast.success(`Profile visibility: ${e.target.checked ? 'Public' : 'Private'}`);
-              }}
+              checked={profile.public_profile} 
+              disabled={isUpdatingPublic}
+              onChange={(e) => handleTogglePublic(e.target.checked)}
             />
             <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-black"></div>
           </label>
@@ -145,15 +240,62 @@ function GeneralSettingsTab() {
 /* ============================================================================== */
 /* TAB: PROFILE SETTINGS */
 /* ============================================================================== */
-function ProfileSettingsTab() {
-  const [formData, setFormData] = useState({
-    firstName: 'Destiny',
-    lastName: 'Frank',
-    bio: 'Fullstack developer specializing in Next.js and Django security systems.',
-  });
+interface ProfileSettingsTabProps {
+  profile: UserProfileData;
+  onRefresh: () => Promise<void>;
+}
 
-  const handleSave = () => {
-    toast.success('Profile changes successfully saved (Mock UI)!');
+function ProfileSettingsTab({ profile, onRefresh }: ProfileSettingsTabProps) {
+  // State to hold and clean local form data
+  const [formData, setFormData] = useState({
+    fullName: profile.full_name || '',
+    bio: profile.bio || '',
+  });
+  // State to manage loading spinners during submit patches
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sync state if profile prop changes on updates
+  useEffect(() => {
+    setFormData({
+      fullName: profile.full_name || '',
+      bio: profile.bio || '',
+    });
+  }, [profile]);
+
+  // Handle PUT submission targeting profile details
+  const handleSave = async () => {
+    setIsSaving(true);
+    const cleanedName = formData.fullName.trim();
+    
+    // Core boundary check to guarantee clean database indexes
+    if (!cleanedName) {
+      toast.error("Full Name cannot be empty.");
+      setIsSaving(false);
+      return;
+    }
+
+    const payload = {
+      full_name: cleanedName,
+      bio: formData.bio,
+    };
+
+    const res = await updateUserProfileAction(payload);
+    if (res.success) {
+      toast.success('Profile changes successfully saved!');
+      await onRefresh();
+    } else {
+      toast.error(res.message || 'Failed to save profile changes.');
+    }
+    setIsSaving(false);
+  };
+
+  // Helper method to resolve fallback initials for user initials avatars
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 0 || parts[0] === '') return 'U';
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   return (
@@ -164,12 +306,20 @@ function ProfileSettingsTab() {
 
       <div className="flex flex-col gap-8 md:flex-row md:items-start">
         {/* Avatar change container */}
-        <div className="relative group mx-auto md:mx-0">
+        <div className="relative group mx-auto md:mx-0 shrink-0">
           <div className="h-28 w-28 rounded-3xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 overflow-hidden relative">
-            <span className="text-3xl font-black text-zinc-400">DF</span>
+            {profile.avatar ? (
+              <img 
+                src={profile.avatar} 
+                alt={profile.full_name} 
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <span className="text-3xl font-black text-zinc-400">{getInitials(profile.full_name)}</span>
+            )}
           </div>
           <button 
-            onClick={() => toast.info('Photo upload selector mock triggered')}
+            onClick={() => toast.info('Photo upload selector mock triggered. We will configure direct Cloudinary upload in the next step!')}
             className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 cursor-pointer"
           >
             <Camera size={14} />
@@ -178,23 +328,24 @@ function ProfileSettingsTab() {
 
         {/* Input grids */}
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">First Name</label>
+          <div className="sm:col-span-2 space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Full Name</label>
             <input 
               type="text" 
-              value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              placeholder="e.g. Destiny Frank"
               className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30 outline-none"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Last Name</label>
+          <div className="sm:col-span-2 space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Email Address (Read-Only)</label>
             <input 
-              type="text" 
-              value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-              className="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 py-2.5 text-sm transition-all focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30 outline-none"
+              type="email" 
+              value={profile.email}
+              disabled
+              className="w-full rounded-xl border border-zinc-100 dark:border-zinc-900 bg-zinc-50 dark:bg-zinc-900/50 px-4 py-2.5 text-sm text-zinc-400 dark:text-zinc-500 cursor-not-allowed outline-none"
             />
           </div>
 
@@ -213,9 +364,10 @@ function ProfileSettingsTab() {
       <div className="flex justify-end pt-4 border-t border-zinc-100 dark:border-zinc-900">
         <button 
           onClick={handleSave}
-          className="px-6 py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:shadow-md cursor-pointer transition-shadow"
+          disabled={isSaving}
+          className="px-6 py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
         >
-          Save Profile Details
+          {isSaving ? "Saving..." : "Save Profile Details"}
         </button>
       </div>
     </div>
