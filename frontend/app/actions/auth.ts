@@ -287,6 +287,77 @@ export async function requestMagicLinkAction(payload: { email: string }) {
 }
 
 /**
+ * VERIFY MAGIC LINK SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this like presenting your VIP passport stamp to the hotel desk clerk.
+ * The clerk takes the stamp, sends it privately to the Django server to check its mathematical validity,
+ * receives the login access and refresh credentials, sets them securely in cookies,
+ * and confirms that you are checked in!
+ */
+export async function verifyMagicLinkAction(token: string) {
+    try {
+        // 1. Send a POST request to our secure Django magic link verification endpoint.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/magic-link/verify/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token }),
+        });
+
+        // 2. Parse the returned JSON response body.
+        const data = await response.json();
+
+        // 3. Evaluate if the token verification was successful.
+        if (response.ok) {
+            // Retrieve and await the Next.js asynchronous cookie store helper.
+            const cookieStore = await cookies();
+
+            // Extract the access and refresh tokens from the body.
+            const accessToken = data.access;
+            const refreshToken = data.refresh;
+
+            // Set the access token cookie.
+            cookieStore.set('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/',
+                maxAge: 60 * 60, // 1 hour
+            });
+
+            // Set the refresh token cookie.
+            if (refreshToken) {
+                cookieStore.set('refresh_token', refreshToken, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
+                    maxAge: 7 * 24 * 60 * 60, // 7 days
+                });
+            }
+
+            return {
+                success: true,
+                message: data.message || 'Authenticated successfully.',
+                user: data.user,
+            };
+        } else {
+            return {
+                success: false,
+                message: data.error || data.message || 'Verification failed.',
+            };
+        }
+    } catch (error: any) {
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
+/**
  * LOGOUT SERVER ACTION
  * 
  * Analogy:
