@@ -2,7 +2,7 @@
 from django.urls import path
 
 # Import our custom Views to hook them up to URL paths.
-from .views import RegisterView, LoginView, GitHubLogin, GoogleLogin, RequestMagicLinkView, VerifyMagicLinkView, RequestOTPView, VerifyOTPView, UserProfileView
+from .views import RegisterView, LoginView, GitHubLogin, GoogleLogin, RequestMagicLinkView, VerifyMagicLinkView, RequestOTPView, VerifyOTPView, UserProfileView, PasswordChangeView
 
 # Define the local URL patterns list for the userauths application.
 urlpatterns = [
@@ -34,5 +34,9 @@ urlpatterns = [
 
     # 9. Map the 'profile/' path to our UserProfileView class.
     path('profile/', UserProfileView.as_view(), name='profile'),
+
+    # 10. Map the 'password/change/' path to our PasswordChangeView class.
+    path('password/change/', PasswordChangeView.as_view(), name='password_change'),
 ]
+
 

@@ -29,7 +29,7 @@ User = get_user_model()
 from django.contrib.auth import authenticate
 
 # Import our custom serializers to clean and validate incoming payloads.
-from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, PasswordChangeSerializer
 
 # Import the JWT generation tool from SimpleJWT.
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -684,5 +684,39 @@ class UserProfileView(APIView):
     def patch(self, request):
         # PATCH is just a shorthand delegation for our partial-supported PUT handler
         return self.put(request)
+
+
+class PasswordChangeView(APIView):
+    """
+    SECURE PASSWORD CHANGE VIEW
+    
+    Analogy:
+    Think of this view like a secure banking portal password updater.
+    1. The customer presents their active Bearer security token card (IsAuthenticated).
+    2. They fill out a form providing their current password, their new chosen password,
+       and their confirmation password.
+    3. The cashier (the serializer) validates that their current password matches the active
+       database hash securely.
+    4. If the check succeeds, the cashier hashes the new password using set_password(),
+       stores the new hash in the database, and returns a successful response.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        # Pass request inside context so the serializer can access the authenticated user
+        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
+        
+        if serializer.is_valid():
+            # Update the user's password using the standard set_password hashing routine
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            
+            return Response({
+                "message": "Password changed successfully."
+            }, status=status.HTTP_200_OK)
+            
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 

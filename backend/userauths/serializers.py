@@ -134,3 +134,62 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return instance
 
+
+class PasswordChangeSerializer(serializers.Serializer):
+    """
+    PASSWORD CHANGE SERIALIZER
+    
+    Analogy:
+    Think of this serializer like a secure combination-lock reset form.
+    The vault gatekeeper (the serializer) refuses to change your vault combination
+    unless you can prove you already know the combination of the active lock (current_password)!
+    Then, it ensures your new combination is strong, safe, and typed twice to avoid typos.
+    """
+    current_password = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        write_only=True
+    )
+    new_password = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        write_only=True
+    )
+    confirm_new_password = serializers.CharField(
+        required=True,
+        style={'input_type': 'password'},
+        write_only=True
+    )
+
+    def validate_current_password(self, value):
+        # Retrieve the authenticated user from context to verify password
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Your current password is incorrect.")
+        return value
+
+    def validate(self, attrs):
+        # 1. Verify if the new password matches confirmation exactly
+        if attrs['new_password'] != attrs['confirm_new_password']:
+            raise serializers.ValidationError({"new_password": "New passwords do not match."})
+
+        # 2. Prevent setting the same password
+        if attrs['current_password'] == attrs['new_password']:
+            raise serializers.ValidationError({"new_password": "Your new password cannot be the same as your current password."})
+
+        # 3. Enforce the same strength rules as RegisterSerializer
+        password = attrs['new_password']
+        if len(password) < 8:
+            raise serializers.ValidationError({"new_password": "Password must be at least 8 characters long."})
+        if not re.search(r'[A-Z]', password):
+            raise serializers.ValidationError({"new_password": "Password must contain at least one uppercase letter."})
+        if not re.search(r'[a-z]', password):
+            raise serializers.ValidationError({"new_password": "Password must contain at least one lowercase letter."})
+        if not re.search(r'[0-9]', password):
+            raise serializers.ValidationError({"new_password": "Password must contain at least one number."})
+        if not re.search(r'[@#$!%*?&]', password):
+            raise serializers.ValidationError({"new_password": "Password must contain at least one special character."})
+
+        return attrs
+
+
