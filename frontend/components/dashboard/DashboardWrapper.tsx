@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Logo from '@/components/Logo';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface DashboardWrapperProps {
   children: React.ReactNode;
@@ -136,6 +137,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
           {/* User badge */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <div className="text-right hidden sm:block">
               <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Destiny Frank</p>
               <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-black">Pro Member</p>

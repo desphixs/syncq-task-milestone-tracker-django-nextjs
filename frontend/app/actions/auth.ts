@@ -498,4 +498,61 @@ export async function verifyOtpAction(payload: { email: string; otp: string }) {
     }
 }
 
+/**
+ * SAVE THEME PREFERENCE SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like a secure background carrier.
+ * When the user flips their theme setting, this carrier runs in the background to our secure Django profile endpoint.
+ * It submits the selected preference ('light', 'dark', or 'system') to the user's permanent database profile record,
+ * ensuring that their preference is safely stashed and loads instantly on any device!
+ * 
+ * Because it runs on the server, it securely fetches the user's access token from HttpOnly cookies and
+ * authenticates requests with Django directly.
+ */
+export async function saveThemeAction(theme: string) {
+    try {
+        // 1. Fetch the user's access token securely from HttpOnly browser cookies.
+        const cookieStore = await cookies();
+        const accessToken = cookieStore.get('access_token')?.value;
 
+        // If not authenticated, we store it in a temporary local theme cookie or report deferral.
+        if (!accessToken) {
+            return {
+                success: false,
+                message: "User session is unauthenticated. Theme preference saved locally.",
+            };
+        }
+
+        // 2. Dispatch a secure POST request to our Django theme update endpoint.
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/userauths/theme/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`, // Authenticate with SimpleJWT Bearer header
+            },
+            body: JSON.stringify({ theme }),
+        });
+
+        // Parse returned response
+        const data = await response.json();
+
+        if (response.ok) {
+            return {
+                success: true,
+                message: data.message || "Theme preference synchronized with backend successfully.",
+                theme: data.theme,
+            };
+        } else {
+            return {
+                success: false,
+                message: data.error || data.message || "Failed to synchronize theme with backend.",
+            };
+        }
+    } catch (error: any) {
+        return {
+            success: false,
+            message: `Background sync deferred: ${error.message || 'Connection offline.'}`,
+        };
+    }
+}

@@ -11,6 +11,9 @@ import { logoutAction } from "@/app/actions/auth";
 // Import beautiful icons from Lucide React to create a highly aesthetic, premium look.
 import { LogOut, LogIn, User, BookOpen, GraduationCap, LayoutDashboard } from "lucide-react";
 
+// Import our custom premium ThemeToggle switcher component.
+import ThemeToggle from "@/components/ThemeToggle";
+
 /**
  * HEADER COMPONENT (Server Component)
  *
@@ -59,6 +62,7 @@ export default async function Header() {
 
                     {/* DYNAMIC AUTHENTICATION ACTION STATUS */}
                     <div className="flex items-center gap-4 pl-4 border-l border-zinc-200 dark:border-zinc-800">
+                        <ThemeToggle />
                         {isLoggedIn ? (
                             // RENDER SIGNED-IN STATE: If the session is authenticated, display welcome + Logout Action
                             <div className="flex items-center gap-4">
