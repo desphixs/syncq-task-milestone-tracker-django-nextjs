@@ -6,7 +6,9 @@ from rest_framework.permissions import AllowAny
 # Import standard exceptions from DRF to handle secure error routing.
 from rest_framework.exceptions import AuthenticationFailed
 # Import Django's cryptographic signing tools.
-from django.core.signing import TimestampSigner
+from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
+# Import our custom database UsedToken model to track token consumption.
+from .models import UsedToken
 
 # Import requests as http_requests to manage standard client-side API exchanges.
 import requests as http_requests
@@ -381,5 +383,84 @@ class RequestMagicLinkView(APIView):
 
         # Return a success report payload to the frontend.
         return Response({'message': 'Magic link sent! Check your inbox.'}, status=status.HTTP_200_OK)
+
+
+class VerifyMagicLinkView(APIView):
+    """
+    VERIFY MAGIC LINK VIEW
+    
+    Analogy:
+    Think of this like arriving at our hotel club lobby customs desk holding your
+    temporary signature voucher. The customs officer reads the cryptographic stamp
+    using their secret verification key. They verify that the stamp is mathematically authentic,
+    belongs to a registered active citizen, and has not passed its 15-minute self-destruct limit.
+    If everything is green, they file your voucher in the 'consumed' cabinet (the UsedToken database)
+    so it can never be used again, and hand you your official room key (JWT cookies) to log you in!
+    """
+    # Allow any guest/unauthenticated user to verify their token.
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # 1. Retrieve the token from query parameters or request body payload.
+        # This dynamic double-check supports both query strings and JSON payloads.
+        token = request.query_params.get('token', '').strip() or request.data.get('token', '').strip()
+        if not token:
+            return Response({'error': 'Token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 2. Check if this token signature has already been consumed (replay attack protection).
+        if UsedToken.objects.filter(token=token).exists():
+            return Response({'error': 'This magic link has already been used. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3. Leverage TimestampSigner to unsign and cryptographically verify the token.
+        signer = TimestampSigner()
+        try:
+            # We enforce a maximum lifespan age of 15 minutes (900 seconds).
+            email = signer.unsign(token, max_age=900)
+        except SignatureExpired:
+            return Response({'error': 'This magic link has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+        except BadSignature:
+            return Response({'error': 'Invalid or corrupted magic link. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4. Find the user in the database.
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'error': 'No user account found matching this magic link.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response({'error': 'This account is inactive. Please contact support.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 5. Invalidate the token signature immediately by recording it in our UsedToken archive.
+        UsedToken.objects.create(token=token)
+
+        # 6. Issue standard SimpleJWT Access and Refresh session credentials.
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        # 7. Package the return payload response.
+        response_body = {
+            "message": "Authenticated successfully.",
+            "access": access_token,
+            "refresh": refresh_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name
+            }
+        }
+
+        response = Response(response_body, status=status.HTTP_200_OK)
+
+        # 8. Nest the refresh token inside a secure, HttpOnly, Lax browser cookie.
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite='Lax'
+        )
+
+        return response
 
 

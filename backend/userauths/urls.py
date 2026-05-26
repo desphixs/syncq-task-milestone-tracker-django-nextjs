@@ -2,7 +2,7 @@
 from django.urls import path
 
 # Import our custom Views to hook them up to URL paths.
-from .views import RegisterView, LoginView, GitHubLogin, GoogleLogin, RequestMagicLinkView
+from .views import RegisterView, LoginView, GitHubLogin, GoogleLogin, RequestMagicLinkView, VerifyMagicLinkView
 
 # Define the local URL patterns list for the userauths application.
 urlpatterns = [
@@ -22,4 +22,7 @@ urlpatterns = [
 
     # 5. Map the 'magic-link/request/' path to our RequestMagicLinkView class.
     path('magic-link/request/', RequestMagicLinkView.as_view(), name='request_magic_link'),
+
+    # 6. Map the 'magic-link/verify/' path to our VerifyMagicLinkView class.
+    path('magic-link/verify/', VerifyMagicLinkView.as_view(), name='verify_magic_link'),
 ]

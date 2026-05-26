@@ -94,3 +94,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         Returns a friendly representation string whenever the object is printed.
         """
         return self.email
+
+
+class UsedToken(models.Model):
+    """
+    Tracks consumed cryptographic signatures to prevent replay attacks (token reuse).
+    Since TimestampSigner tokens are stateless, storing used ones until their natural
+    expiration is a standard security practice to prevent replay attacks.
+    """
+    token = models.CharField(max_length=500, unique=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Used: {self.token[:30]}..."
