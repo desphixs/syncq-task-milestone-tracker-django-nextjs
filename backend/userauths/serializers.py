@@ -112,8 +112,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'full_name', 'bio', 'avatar', 'email_notification', 'public_profile']
-        read_only_fields = ['email']
+        fields = ['email', 'full_name', 'bio', 'avatar', 'email_notification', 'public_profile', 'created_at']
+        read_only_fields = ['email', 'created_at']
 
     def update(self, instance, validated_data):
         # 1. Safely extract profile nested fields dictionary parsed by DRF's dotted source rules
