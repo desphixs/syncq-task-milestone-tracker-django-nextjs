@@ -386,6 +386,29 @@ class AnalyticsAPIView(APIView):
             status='done'
         ).count()
         
+        # Step 8.5: Fetch the actual overdue tasks query list to display in the UI.
+        # We use select_related('project') to retrieve project titles in a single SQL join query.
+        overdue_tasks_qs = user_tasks.filter(
+            due_date__lt=today
+        ).exclude(
+            status='done'
+        ).select_related('project')
+        
+        # Serialize the task models. Since we want to display the project title in the UI,
+        # we dynamically build a list of dictionaries.
+        overdue_tasks_list = [
+            {
+                "id": t.id,
+                "title": t.title,
+                "description": t.description,
+                "priority": t.priority,
+                "status": t.status,
+                "due_date": t.due_date.strftime("%Y-%m-%d") if t.due_date else None,
+                "project_title": t.project.title
+            }
+            for t in overdue_tasks_qs
+        ]
+
         # Step 9: Bundle all the aggregated metrics into a structured response dictionary.
         analytics_data = {
             "total_projects": total_projects,
@@ -401,7 +424,8 @@ class AnalyticsAPIView(APIView):
                 "high": high_priority_count
             },
             "overdue_tasks": overdue_count,
-            "due_next_7_days": due_next_7_days_count
+            "due_next_7_days": due_next_7_days_count,
+            "overdue_tasks_list": overdue_tasks_list
         }
         
         # Step 10: Return the packaged metrics to the frontend client with a 200 OK status code.
