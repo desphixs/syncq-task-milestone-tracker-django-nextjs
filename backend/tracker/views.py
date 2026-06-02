@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Project, Task
 from .serializers import ProjectSerializer, ProjectDetailSerializer, TaskSerializer
 from django.utils import timezone
+import datetime
 
 class ProjectListCreateAPIView(APIView):
     """
@@ -321,4 +322,89 @@ class TaskDetailAPIView(APIView):
             {"detail": "Task successfully deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class AnalyticsAPIView(APIView):
+    """
+    ANALYTICS API VIEW
+    
+    Analogy:
+    Think of this like a dashboard builder at a command center.
+    Instead of asking the user to manually count all their projects, task cards,
+    and deadlines, the dashboard builder queries all drawers, counts the active tasks,
+    categorizes them by urgency and column status, and highlights any overdue deadlines
+    in a single comprehensive report package (JSON dictionary).
+    """
+    
+    # We require the client request to be authenticated with a valid token.
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Handles aggregating and calculating task and project metrics for the logged-in user.
+        """
+        # Step 1: Count total projects owned by the currently authenticated user.
+        total_projects = request.user.projects.count()
+        
+        # Step 2: Query the Task model to fetch all tasks belonging to the user's projects.
+        # We perform a relational filter: `project__owner=request.user`.
+        user_tasks = Task.objects.filter(project__owner=request.user)
+        
+        # Step 3: Count total tasks across all projects owned by the user.
+        total_tasks = user_tasks.count()
+        
+        # Step 4: Calculate status breakdown (To Do, Doing, Done).
+        # Individual counts are extremely easy to read, debug, and learn for beginners.
+        todo_count = user_tasks.filter(status='todo').count()
+        doing_count = user_tasks.filter(status='doing').count()
+        done_count = user_tasks.filter(status='done').count()
+        
+        # Step 5: Calculate priority breakdown (Low, Medium, High).
+        low_priority_count = user_tasks.filter(priority='low').count()
+        medium_priority_count = user_tasks.filter(priority='medium').count()
+        high_priority_count = user_tasks.filter(priority='high').count()
+        
+        # Step 6: Define date boundaries using Python's standard datetime/timezone utilities.
+        # Since due_date is a DateField, we compare it against a date object.
+        today = timezone.now().date()
+        next_week = today + datetime.timedelta(days=7)
+        
+        # Step 7: Calculate overdue tasks.
+        # Overdue tasks are incomplete (status is not 'done') AND their due_date is strictly in the past.
+        # We check for not NULL due_date because a task with no due date cannot be overdue.
+        overdue_count = user_tasks.filter(
+            due_date__lt=today
+        ).exclude(
+            status='done'
+        ).count()
+        
+        # Step 8: Calculate tasks due within the next 7 days.
+        # We filter tasks that are incomplete (not 'done') AND due between today and 7 days from now (inclusive).
+        due_next_7_days_count = user_tasks.filter(
+            due_date__range=[today, next_week]
+        ).exclude(
+            status='done'
+        ).count()
+        
+        # Step 9: Bundle all the aggregated metrics into a structured response dictionary.
+        analytics_data = {
+            "total_projects": total_projects,
+            "total_tasks": total_tasks,
+            "status_breakdown": {
+                "todo": todo_count,
+                "doing": doing_count,
+                "done": done_count
+            },
+            "priority_breakdown": {
+                "low": low_priority_count,
+                "medium": medium_priority_count,
+                "high": high_priority_count
+            },
+            "overdue_tasks": overdue_count,
+            "due_next_7_days": due_next_7_days_count
+        }
+        
+        # Step 10: Return the packaged metrics to the frontend client with a 200 OK status code.
+        return Response(analytics_data, status=status.HTTP_200_OK)
+
 

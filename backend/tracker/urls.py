@@ -4,7 +4,8 @@ from .views import (
     ProjectListCreateAPIView, 
     ProjectDetailAPIView,
     TaskListCreateAPIView,
-    TaskDetailAPIView
+    TaskDetailAPIView,
+    AnalyticsAPIView
 )
 # Define the url patterns that are handled inside our tracker application.
 # Analogy:
@@ -41,4 +42,12 @@ urlpatterns = [
         TaskDetailAPIView.as_view(),
         name='task-detail'
     ),
+
+    # Extension for retrieving overall project analytics metrics: matches 'analytics/'
+    path(
+        'analytics/',
+        AnalyticsAPIView.as_view(),
+        name='project-analytics'
+    ),
 ]
+
