@@ -10,12 +10,14 @@ import DashboardWrapper from '@/components/dashboard/DashboardWrapper';
 import { 
   ArrowLeft, CheckCircle2, Clock, Calendar, 
   Settings, AlertCircle, LayoutGrid, CheckSquare,
-  ListTodo, Activity, List
+  ListTodo, Activity, List, Plus
 } from 'lucide-react';
 // Import our Project detail server action.
 import { getProjectDetailAction } from '@/app/actions/tracker/projects';
 // Import the getTasksAction and the Task interface from our tasks actions file.
 import { getTasksAction, Task } from '@/app/actions/tracker/tasks';
+// Import the AddTaskModal component we created to separate the dialog logic.
+import AddTaskModal from '@/components/AddTaskModal';
 
 // Define the Project typescript interface structure.
 // This matches the exact dynamic calculated statistics returned by our Django REST API backend!
@@ -62,6 +64,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   // Active filter tab for the tabbed List view ('all', 'todo', 'doing', 'done')
   const [activeListTab, setActiveListTab] = useState<'all' | 'todo' | 'doing' | 'done'>('all');
+
+  // Modal control states
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  
+  // Track which status column triggered the modal so we can pre-select it
+  const [modalDefaultStatus, setModalDefaultStatus] = useState<'todo' | 'doing' | 'done'>('todo');
 
   // Effect hook to fetch project details and tasks on component mount.
   useEffect(() => {
@@ -129,6 +137,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const getFilteredTasksForList = () => {
     if (activeListTab === 'all') return tasks;
     return tasks.filter(task => task.status === activeListTab);
+  };
+
+  // Opens the Add Task dialog modal with a pre-configured status category
+  const openAddTaskModal = (status: 'todo' | 'doing' | 'done') => {
+    setModalDefaultStatus(status);
+    setIsAddModalOpen(true);
+  };
+
+  // Callback triggered when a task is successfully created in the AddTaskModal component
+  const handleAddTaskSuccess = async (newTask: Task) => {
+    // Append the newly created task to state immediately to prevent layout refresh latency
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    
+    // Fetch the updated project details to sync the horizontal milestone progress bar percentage
+    const projectResult = await getProjectDetailAction(projectId);
+    if (projectResult.success && projectResult.project) {
+      setProject(projectResult.project);
+    }
   };
 
   return (
@@ -389,16 +415,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                       
                       {/* TO DO COLUMN */}
                       <div className="bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/65 dark:border-zinc-850 rounded-3xl p-5 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400">
-                            <ListTodo size={14} />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400">
+                              <ListTodo size={14} />
+                            </div>
+                            <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
+                              To Do
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
+                              {getTasksByStatus('todo').length}
+                            </span>
                           </div>
-                          <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
-                            To Do
-                          </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
-                            {getTasksByStatus('todo').length}
-                          </span>
+                          
+                          <button
+                            onClick={() => openAddTaskModal('todo')}
+                            className="p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-850 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                            title="Add Task to To Do"
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
 
                         <div className="space-y-3 min-h-[120px]">
@@ -416,16 +452,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
                       {/* DOING COLUMN */}
                       <div className="bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/65 dark:border-zinc-850 rounded-3xl p-5 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
-                            <Activity size={14} />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400">
+                              <Activity size={14} />
+                            </div>
+                            <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
+                              Doing
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
+                              {getTasksByStatus('doing').length}
+                            </span>
                           </div>
-                          <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
-                            Doing
-                          </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
-                            {getTasksByStatus('doing').length}
-                          </span>
+
+                          <button
+                            onClick={() => openAddTaskModal('doing')}
+                            className="p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-850 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                            title="Add Task to Doing"
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
 
                         <div className="space-y-3 min-h-[120px]">
@@ -443,16 +489,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
                       {/* DONE COLUMN */}
                       <div className="bg-zinc-50/50 dark:bg-zinc-950/20 border border-zinc-200/65 dark:border-zinc-850 rounded-3xl p-5 space-y-4">
-                        <div className="flex items-center gap-2">
-                          <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
-                            <CheckCircle2 size={14} />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400">
+                              <CheckCircle2 size={14} />
+                            </div>
+                            <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
+                              Done
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
+                              {getTasksByStatus('done').length}
+                            </span>
                           </div>
-                          <span className="text-xs font-black text-zinc-900 dark:text-zinc-200 uppercase tracking-wider">
-                            Done
-                          </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 bg-zinc-200/60 dark:bg-zinc-850 text-zinc-650 dark:text-zinc-350 rounded-full">
-                            {getTasksByStatus('done').length}
-                          </span>
+
+                          <button
+                            onClick={() => openAddTaskModal('done')}
+                            className="p-1.5 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-850 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                            title="Add Task to Done"
+                          >
+                            <Plus size={16} />
+                          </button>
                         </div>
 
                         <div className="space-y-3 min-h-[120px]">
@@ -475,28 +531,40 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   {viewMode === 'list' && (
                     <div className="bg-white dark:bg-zinc-900/40 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 space-y-6">
                       
-                      {/* Status Filter Tabs */}
-                      <div className="flex flex-wrap gap-2 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
-                        {(['all', 'todo', 'doing', 'done'] as const).map((tab) => (
-                          <button
-                            key={tab}
-                            onClick={() => setActiveListTab(tab)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
-                              activeListTab === tab
-                                ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md'
-                                : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                            }`}
-                          >
-                            {tab === 'todo' ? 'To Do' : tab}
-                            <span className={`ml-2 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
-                              activeListTab === tab 
-                                ? 'bg-zinc-800 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-800' 
-                                : 'bg-zinc-200 dark:bg-zinc-850 text-zinc-600 dark:text-zinc-400'
-                            }`}>
-                              {tab === 'all' ? tasks.length : tasks.filter(t => t.status === tab).length}
-                            </span>
-                          </button>
-                        ))}
+                      {/* List Filters & Actions Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-zinc-100 dark:border-zinc-800/60">
+                        {/* Status Filter Tabs */}
+                        <div className="flex flex-wrap gap-2">
+                          {(['all', 'todo', 'doing', 'done'] as const).map((tab) => (
+                            <button
+                              key={tab}
+                              onClick={() => setActiveListTab(tab)}
+                              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
+                                activeListTab === tab
+                                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md'
+                                  : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                              }`}
+                            >
+                              {tab === 'todo' ? 'To Do' : tab}
+                              <span className={`ml-2 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full ${
+                                activeListTab === tab 
+                                  ? 'bg-zinc-800 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-800' 
+                                  : 'bg-zinc-200 dark:bg-zinc-850 text-zinc-600 dark:text-zinc-400'
+                              }`}>
+                                {tab === 'all' ? tasks.length : tasks.filter(t => t.status === tab).length}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Direct Add Task trigger */}
+                        <button
+                          onClick={() => openAddTaskModal('todo')}
+                          className="bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                        >
+                          <Plus size={14} />
+                          <span>Add Task</span>
+                        </button>
                       </div>
 
                       {/* Vertically Scrolling List of Task Cards */}
@@ -521,6 +589,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         )}
 
       </div>
+
+      {/* CREATE NEW TASK FORM DIALOG MODAL */}
+      <AddTaskModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        projectId={Number(projectId)}
+        defaultStatus={modalDefaultStatus}
+        onSuccess={handleAddTaskSuccess}
+      />
     </DashboardWrapper>
   );
 }

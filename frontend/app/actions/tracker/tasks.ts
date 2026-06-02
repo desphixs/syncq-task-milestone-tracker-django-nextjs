@@ -56,3 +56,48 @@ export async function getTasksAction(projectId: string | number) {
     };
   }
 }
+
+/**
+ * CREATE TASK SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this like pinning a new sticky note task card onto a project board.
+ * It sends the task title, description, priority level, and target due date,
+ * along with the parent project ID to associate it.
+ */
+export async function createTaskAction(payload: {
+  project: number;
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'doing' | 'done';
+  due_date: string | null;
+}) {
+  try {
+    // Send a secure POST request with the task payload to Django.
+    const { ok, status, data } = await apiFetch('/tracker/tasks/', {
+      method: 'POST',
+      body: payload,
+    });
+    if (ok) {
+      return {
+        success: true,
+        message: "Task created successfully.",
+        task: data as Task,
+      };
+    } else {
+      return {
+        success: false,
+        message: data.error || data.detail || "Failed to create task.",
+        errors: data,
+        status,
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+    };
+  }
+}
+
