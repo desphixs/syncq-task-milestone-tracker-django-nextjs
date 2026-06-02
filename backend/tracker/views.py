@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-# Import our Project model and its corresponding serializer translator.
+# Import our Project model and its corresponding serializer translators.
 from .models import Project
-from .serializers import ProjectSerializer
+from .serializers import ProjectSerializer, ProjectDetailSerializer
 
 class ProjectListCreateAPIView(APIView):
     """
@@ -96,10 +96,15 @@ class ProjectDetailAPIView(APIView):
         Handles retrieving the details of a single project owned by the user.
         """
         # Step 1: Securely fetch the project using our helper method.
+        # This is a critical security step! If a user tries to access a project
+        # ID that belongs to someone else, this method will raise an Http404 exception
+        # and immediately stop execution before calculating any database statistics or
+        # exposing private information. Absolute data isolation is guaranteed!
         project = self.get_object(pk, request.user)
         
-        # Step 2: Translate the single database record into clean JSON data.
-        serializer = ProjectSerializer(project)
+        # Step 2: Translate the single database record into clean JSON data using the detail serializer.
+        # ProjectDetailSerializer computes total tasks, completed tasks, and completion percentage!
+        serializer = ProjectDetailSerializer(project)
         
         # Step 3: Return the JSON representation to the client.
         return Response(serializer.data, status=status.HTTP_200_OK)
