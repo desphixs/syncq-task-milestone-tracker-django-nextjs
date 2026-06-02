@@ -147,4 +147,47 @@ export async function updateTaskAction(
   }
 }
 
+/**
+ * DELETE TASK SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this like tearing off a sticky note and tossing it in the recycling bin.
+ * Once done, it is permanently deleted from the Django database.
+ */
+export async function deleteTaskAction(taskId: number) {
+  try {
+    // We make an asynchronous call to our backend API using the `apiFetch` helper function.
+    // We dynamically insert the `taskId` into the URL path so Django knows exactly which task to remove.
+    // The HTTP method is set to 'DELETE' since we are performing a destructive removal operation.
+    const { ok, status, data } = await apiFetch(`/tracker/tasks/${taskId}/`, {
+      method: 'DELETE', // DELETE is the standard HTTP verb used to delete a resource
+    });
+
+    // Check if the backend responded with a successful status code (in the 200-299 range).
+    if (ok) {
+      // If the deletion was successful, return a success indicator to the frontend caller.
+      return {
+        success: true,
+        message: "Task deleted successfully.",
+      };
+    } else {
+      // If the backend returned an error status (like 400 or 403), return success=false.
+      // We check if the response data contains a specific error message or default message.
+      return {
+        success: false,
+        message: data.error || data.detail || "Failed to delete task.",
+        status, // Include the HTTP status code for debugging if necessary
+      };
+    }
+  } catch (error: any) {
+    // If a network connection error or server crash happens, we catch the exception.
+    // We return a user-friendly error message showing what went wrong.
+    return {
+      success: false,
+      message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+    };
+  }
+}
+
+
 

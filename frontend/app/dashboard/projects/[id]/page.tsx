@@ -10,12 +10,12 @@ import DashboardWrapper from '@/components/dashboard/DashboardWrapper';
 import { 
   ArrowLeft, CheckCircle2, Clock, Calendar, 
   Settings, AlertCircle, LayoutGrid, CheckSquare,
-  ListTodo, Activity, List, Plus
+  ListTodo, Activity, List, Plus, Trash2
 } from 'lucide-react';
 // Import our Project detail server action.
 import { getProjectDetailAction } from '@/app/actions/tracker/projects';
 // Import the getTasksAction and the Task interface from our tasks actions file.
-import { getTasksAction, Task, updateTaskAction } from '@/app/actions/tracker/tasks';
+import { getTasksAction, Task, updateTaskAction, deleteTaskAction } from '@/app/actions/tracker/tasks';
 // Import the AddTaskModal component we created to separate the dialog logic.
 import AddTaskModal from '@/components/AddTaskModal';
 
@@ -205,6 +205,36 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       // Revert changes on backend save failure
       setTasks(backupTasks);
       alert(result.message || "Failed to update task status.");
+    }
+  };
+
+  // Handles deleting a task completely from both state and the backend
+  const handleDeleteTask = async (taskId: number) => {
+    // Show a confirmation dialog to prevent accidental clicks
+    const confirmDelete = window.confirm("Are you sure you want to delete this task? This action cannot be undone.");
+    
+    // If the user cancels the confirmation, exit early
+    if (!confirmDelete) return;
+
+    // Keep a backup of the current tasks state list in case the server operation fails
+    const backupTasks = [...tasks];
+
+    // Optimistic UI Update: Instantly filter out the deleted task from our local state list
+    setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+
+    // Call our delete task Server Action in the background
+    const result = await deleteTaskAction(taskId);
+
+    if (result.success) {
+      // Re-fetch project details to update calculated totals and milestone percentage progress
+      const projectResult = await getProjectDetailAction(projectId);
+      if (projectResult.success && projectResult.project) {
+        setProject(projectResult.project);
+      }
+    } else {
+      // Revert to backup tasks list if backend deletion fails
+      setTasks(backupTasks);
+      alert(result.message || "Failed to delete task.");
     }
   };
 
@@ -500,6 +530,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 task={task} 
                                 onToggleCheckbox={handleToggleTaskCheckbox}
                                 onStatusChange={handleStatusChange}
+                                onDelete={handleDeleteTask}
                               />
                             ))
                           )}
@@ -542,6 +573,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 task={task} 
                                 onToggleCheckbox={handleToggleTaskCheckbox}
                                 onStatusChange={handleStatusChange}
+                                onDelete={handleDeleteTask}
                               />
                             ))
                           )}
@@ -584,6 +616,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                                 task={task} 
                                 onToggleCheckbox={handleToggleTaskCheckbox}
                                 onStatusChange={handleStatusChange}
+                                onDelete={handleDeleteTask}
                               />
                             ))
                           )}
@@ -646,6 +679,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                               task={task} 
                               onToggleCheckbox={handleToggleTaskCheckbox}
                               onStatusChange={handleStatusChange}
+                              onDelete={handleDeleteTask}
                             />
                           ))
                         )}
@@ -685,43 +719,55 @@ interface TaskCardProps {
   task: Task;
   onToggleCheckbox: (task: Task) => void;
   onStatusChange: (taskId: number, newStatus: 'todo' | 'doing' | 'done') => void;
+  onDelete: (taskId: number) => void;
 }
 
-function TaskCard({ task, onToggleCheckbox, onStatusChange }: TaskCardProps) {
+function TaskCard({ task, onToggleCheckbox, onStatusChange, onDelete }: TaskCardProps) {
   return (
     <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 shadow-[0_2px_8px_-1px_rgba(0,0,0,0.02)] rounded-2xl p-5 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 relative group flex flex-col space-y-4">
       
       {/* Title & Description section */}
-      <div className="flex items-start gap-3">
-        {/* Clickable checkbox circle toggle */}
-        <button
-          onClick={() => onToggleCheckbox(task)}
-          className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
-            task.status === 'done'
-              ? 'bg-emerald-500 border-emerald-500 text-white'
-              : 'border-zinc-355 dark:border-zinc-700 hover:border-emerald-500 bg-transparent'
-          }`}
-          aria-label={task.status === 'done' ? "Mark task active" : "Mark task complete"}
-        >
-          {task.status === 'done' && <CheckSquare size={12} className="stroke-[3px]" />}
-        </button>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          {/* Clickable checkbox circle toggle */}
+          <button
+            onClick={() => onToggleCheckbox(task)}
+            className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
+              task.status === 'done'
+                ? 'bg-emerald-500 border-emerald-500 text-white'
+                : 'border-zinc-355 dark:border-zinc-700 hover:border-emerald-500 bg-transparent'
+            }`}
+            aria-label={task.status === 'done' ? "Mark task active" : "Mark task complete"}
+          >
+            {task.status === 'done' && <CheckSquare size={12} className="stroke-[3px]" />}
+          </button>
 
-        <div className="space-y-1 overflow-hidden">
-          <h4 className={`text-sm font-bold tracking-tight break-words transition-all duration-200 ${
-            task.status === 'done' 
-              ? 'line-through text-zinc-400 dark:text-zinc-550' 
-              : 'text-zinc-900 dark:text-zinc-100'
-          }`}>
-            {task.title}
-          </h4>
-          {task.description && (
-            <p className={`text-xs leading-relaxed break-words line-clamp-2 ${
-              task.status === 'done' ? 'text-zinc-400 dark:text-zinc-650' : 'text-zinc-550'
+          <div className="space-y-1 overflow-hidden">
+            <h4 className={`text-sm font-bold tracking-tight break-words transition-all duration-200 ${
+              task.status === 'done' 
+                ? 'line-through text-zinc-400 dark:text-zinc-555' 
+                : 'text-zinc-900 dark:text-zinc-100'
             }`}>
-              {task.description}
-            </p>
-          )}
+              {task.title}
+            </h4>
+            {task.description && (
+              <p className={`text-xs leading-relaxed break-words line-clamp-2 ${
+                task.status === 'done' ? 'text-zinc-400 dark:text-zinc-650' : 'text-zinc-555'
+              }`}>
+                {task.description}
+              </p>
+            )}
+          </div>
         </div>
+
+        {/* Clickable Delete Button - Shows up on hover with a nice smooth fade in */}
+        <button
+          onClick={() => onDelete(task.id)}
+          className="text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shrink-0"
+          title="Delete task"
+        >
+          <Trash2 size={13} />
+        </button>
       </div>
 
       {/* Footer statistics - Priority Badge & Target Calendar due date */}
