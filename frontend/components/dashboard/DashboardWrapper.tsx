@@ -47,7 +47,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
   // Navigational items list inside our layout sidebar.
   const navItems = useMemo(() => [
-    { label: 'Overview', href: '/dashboard', icon: <LayoutDashboard size={20} /> },
+    { label: 'Projects', href: '/dashboard', icon: <Milestone size={20} /> },
     { label: 'Profile', href: '/dashboard/profile', icon: <User size={20} /> },
   ], []);
 
