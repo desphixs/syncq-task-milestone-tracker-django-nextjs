@@ -23,7 +23,9 @@ urlpatterns = [
     # Route administrative dashboard traffic to Django's native admin site.
     path('admin/', admin.site.urls),
 
-    # Route all API traffic starting with 'api/' to our 'userauths' application urls file.
+    # Route all API traffic starting with 'api/userauths/' to our 'userauths' application urls file.
     path('api/userauths/', include('userauths.urls')),
-]
 
+    # Route all private task and milestone tracking API traffic to our 'tracker' app urls file.
+    path('api/tracker/', include('tracker.urls')),
+]
