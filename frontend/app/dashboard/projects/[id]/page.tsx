@@ -15,7 +15,7 @@ import {
 // Import our Project detail server action.
 import { getProjectDetailAction } from '@/app/actions/tracker/projects';
 // Import the getTasksAction and the Task interface from our tasks actions file.
-import { getTasksAction, Task } from '@/app/actions/tracker/tasks';
+import { getTasksAction, Task, updateTaskAction } from '@/app/actions/tracker/tasks';
 // Import the AddTaskModal component we created to separate the dialog logic.
 import AddTaskModal from '@/components/AddTaskModal';
 
@@ -154,6 +154,57 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const projectResult = await getProjectDetailAction(projectId);
     if (projectResult.success && projectResult.project) {
       setProject(projectResult.project);
+    }
+  };
+
+  // Toggles task completion. Checking the box moves to 'done', unchecking moves to 'todo'.
+  const handleToggleTaskCheckbox = async (task: Task) => {
+    const targetStatus: 'todo' | 'doing' | 'done' = task.status === 'done' ? 'todo' : 'done';
+    const backupTasks = [...tasks];
+
+    // Optimistic UI Update: Immediately update state for instant visual feedback!
+    setTasks(prevTasks => 
+      prevTasks.map(t => t.id === task.id ? { ...t, status: targetStatus } : t)
+    );
+
+    // Call update action to perform request
+    const result = await updateTaskAction(task.id, { status: targetStatus });
+
+    if (result.success) {
+      // Fetch latest project statistics to update milestone progress percentage
+      const projectResult = await getProjectDetailAction(projectId);
+      if (projectResult.success && projectResult.project) {
+        setProject(projectResult.project);
+      }
+    } else {
+      // Rollback optimistic state changes if the request failed
+      setTasks(backupTasks);
+      alert(result.message || "Failed to update task status.");
+    }
+  };
+
+  // Handles updating the task status directly from a dropdown picker pill
+  const handleStatusChange = async (taskId: number, newStatus: 'todo' | 'doing' | 'done') => {
+    const backupTasks = [...tasks];
+
+    // Optimistic UI Update: Move card instantly on screen
+    setTasks(prevTasks => 
+      prevTasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
+    );
+
+    // Call update action to modify status
+    const result = await updateTaskAction(taskId, { status: newStatus });
+
+    if (result.success) {
+      // Sync progress calculations
+      const projectResult = await getProjectDetailAction(projectId);
+      if (projectResult.success && projectResult.project) {
+        setProject(projectResult.project);
+      }
+    } else {
+      // Revert changes on backend save failure
+      setTasks(backupTasks);
+      alert(result.message || "Failed to update task status.");
     }
   };
 
@@ -444,7 +495,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                           ) : (
                             getTasksByStatus('todo').map((task) => (
-                              <TaskCard key={task.id} task={task} />
+                              <TaskCard 
+                                key={task.id} 
+                                task={task} 
+                                onToggleCheckbox={handleToggleTaskCheckbox}
+                                onStatusChange={handleStatusChange}
+                              />
                             ))
                           )}
                         </div>
@@ -481,7 +537,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                           ) : (
                             getTasksByStatus('doing').map((task) => (
-                              <TaskCard key={task.id} task={task} />
+                              <TaskCard 
+                                key={task.id} 
+                                task={task} 
+                                onToggleCheckbox={handleToggleTaskCheckbox}
+                                onStatusChange={handleStatusChange}
+                              />
                             ))
                           )}
                         </div>
@@ -518,7 +579,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                           ) : (
                             getTasksByStatus('done').map((task) => (
-                              <TaskCard key={task.id} task={task} />
+                              <TaskCard 
+                                key={task.id} 
+                                task={task} 
+                                onToggleCheckbox={handleToggleTaskCheckbox}
+                                onStatusChange={handleStatusChange}
+                              />
                             ))
                           )}
                         </div>
@@ -575,7 +641,12 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                         ) : (
                           getFilteredTasksForList().map((task) => (
-                            <TaskCard key={task.id} task={task} />
+                            <TaskCard 
+                              key={task.id} 
+                              task={task} 
+                              onToggleCheckbox={handleToggleTaskCheckbox}
+                              onStatusChange={handleStatusChange}
+                            />
                           ))
                         )}
                       </div>
@@ -603,31 +674,37 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 }
 
 /**
- * STATIC TASK CARD COMPONENT (LISTING ONLY)
+ * DYNAMIC TASK CARD COMPONENT
  * 
  * Analogy:
  * Think of this card like a visual representation of a single task.
  * It shows the title, description notes, priority badge, and calendar deadline.
- * There are no active input widgets or checkboxes in this initial phase.
+ * It also exposes a checkbox to toggle completion and a dropdown to change the task status.
  */
 interface TaskCardProps {
   task: Task;
+  onToggleCheckbox: (task: Task) => void;
+  onStatusChange: (taskId: number, newStatus: 'todo' | 'doing' | 'done') => void;
 }
 
-function TaskCard({ task }: TaskCardProps) {
+function TaskCard({ task, onToggleCheckbox, onStatusChange }: TaskCardProps) {
   return (
     <div className="bg-white dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-800/80 shadow-[0_2px_8px_-1px_rgba(0,0,0,0.02)] rounded-2xl p-5 hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 relative group flex flex-col space-y-4">
       
       {/* Title & Description section */}
       <div className="flex items-start gap-3">
-        {/* Static decorative checkbox circle */}
-        <div className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-          task.status === 'done'
-            ? 'bg-emerald-500 border-emerald-500 text-white'
-            : 'border-zinc-350 dark:border-zinc-700 bg-transparent'
-        }`}>
+        {/* Clickable checkbox circle toggle */}
+        <button
+          onClick={() => onToggleCheckbox(task)}
+          className={`mt-0.5 shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer ${
+            task.status === 'done'
+              ? 'bg-emerald-500 border-emerald-500 text-white'
+              : 'border-zinc-355 dark:border-zinc-700 hover:border-emerald-500 bg-transparent'
+          }`}
+          aria-label={task.status === 'done' ? "Mark task active" : "Mark task complete"}
+        >
           {task.status === 'done' && <CheckSquare size={12} className="stroke-[3px]" />}
-        </div>
+        </button>
 
         <div className="space-y-1 overflow-hidden">
           <h4 className={`text-sm font-bold tracking-tight break-words transition-all duration-200 ${
@@ -639,7 +716,7 @@ function TaskCard({ task }: TaskCardProps) {
           </h4>
           {task.description && (
             <p className={`text-xs leading-relaxed break-words line-clamp-2 ${
-              task.status === 'done' ? 'text-zinc-400 dark:text-zinc-650' : 'text-zinc-500'
+              task.status === 'done' ? 'text-zinc-400 dark:text-zinc-650' : 'text-zinc-550'
             }`}>
               {task.description}
             </p>
@@ -675,6 +752,20 @@ function TaskCard({ task }: TaskCardProps) {
           <span>
             {task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : "No due date"}
           </span>
+        </div>
+
+        {/* Status Dropdown Picker Pill */}
+        <div className="relative">
+          <select
+            value={task.status}
+            onChange={(e) => onStatusChange(task.id, e.target.value as 'todo' | 'doing' | 'done')}
+            className="text-[10px] bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-lg px-2 py-1 font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 outline-none transition-colors cursor-pointer appearance-none text-center"
+            title="Change status"
+          >
+            <option value="todo">To Do</option>
+            <option value="doing">Doing</option>
+            <option value="done">Done</option>
+          </select>
         </div>
 
       </div>

@@ -101,3 +101,50 @@ export async function createTaskAction(payload: {
   }
 }
 
+/**
+ * UPDATE TASK SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this like editing a sticky note or moving it to another column.
+ * It lets us update individual fields, like changing status from 'todo' to 'done'.
+ */
+export async function updateTaskAction(
+  taskId: number,
+  payload: Partial<{
+    title: string;
+    description: string;
+    priority: 'low' | 'medium' | 'high';
+    status: 'todo' | 'doing' | 'done';
+    due_date: string | null;
+  }>
+) {
+  try {
+    // Send a secure PUT request to modify the task details.
+    // The backend uses partial=True in the serializer, allowing partial updates.
+    const { ok, status, data } = await apiFetch(`/tracker/tasks/${taskId}/`, {
+      method: 'PUT',
+      body: payload,
+    });
+    if (ok) {
+      return {
+        success: true,
+        message: "Task updated successfully.",
+        task: data as Task,
+      };
+    } else {
+      return {
+        success: false,
+        message: data.error || data.detail || "Failed to update task.",
+        errors: data,
+        status,
+      };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+    };
+  }
+}
+
+
