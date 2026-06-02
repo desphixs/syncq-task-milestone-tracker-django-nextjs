@@ -1,7 +1,11 @@
 from django.urls import path
-# Import our Project listing and detail API views from the local views file.
-from .views import ProjectListCreateAPIView, ProjectDetailAPIView
-
+# Import our Project and Task listing and detail API views from the local views file.
+from .views import (
+    ProjectListCreateAPIView, 
+    ProjectDetailAPIView,
+    TaskListCreateAPIView,
+    TaskDetailAPIView
+)
 # Define the url patterns that are handled inside our tracker application.
 # Analogy:
 # Think of this list like a phone switchboard.
@@ -22,5 +26,19 @@ urlpatterns = [
         'projects/<int:pk>/', 
         ProjectDetailAPIView.as_view(), 
         name='project-detail'
+    ),
+    
+    # Extension for listing and creating tasks: matches 'tasks/'
+    path(
+        'tasks/',
+        TaskListCreateAPIView.as_view(),
+        name='task-list-create'
+    ),
+    
+    # Extension for viewing, updating, or deleting a single task: matches 'tasks/<int:pk>/'
+    path(
+        'tasks/<int:pk>/',
+        TaskDetailAPIView.as_view(),
+        name='task-detail'
     ),
 ]

@@ -116,3 +116,39 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         # Step 5: Round to the nearest integer and return the value.
         return round(percentage)
 
+
+class TaskSerializer(serializers.ModelSerializer):
+    """
+    TASK SERIALIZER
+    
+    Analogy:
+    Think of the Task Serializer like a task-inspector at an assembly line.
+    When you create a new task, the inspector checks if the data provided
+    (like the title, priority, and which project it belongs to) is valid.
+    When sending task data to the frontend, the inspector neatly packages
+    the raw database row into an easy-to-read JSON object for React.
+    """
+
+    class Meta:
+        # We bind this serializer to our Task model.
+        model = Task
+        
+        # We specify all the fields we want to expose to our frontend.
+        fields = [
+            'id',
+            'project',
+            'title',
+            'description',
+            'priority',
+            'status',
+            'due_date',
+            'completed_at',
+            'created_at',
+            'updated_at'
+        ]
+        
+        # We make 'completed_at' read-only because we don't want clients
+        # to manually set the completion time. Our backend will automatically
+        # handle the timestamp when the status changes to 'done'!
+        read_only_fields = ['completed_at']
+

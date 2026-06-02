@@ -7,9 +7,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-# Import our Project model and its corresponding serializer translators.
-from .models import Project
-from .serializers import ProjectSerializer, ProjectDetailSerializer
+# Import our Project and Task models and their corresponding serializer translators.
+from .models import Project, Task
+from .serializers import ProjectSerializer, ProjectDetailSerializer, TaskSerializer
+from django.utils import timezone
 
 class ProjectListCreateAPIView(APIView):
     """
@@ -147,3 +148,177 @@ class ProjectDetailAPIView(APIView):
             {"detail": "Project and all associated tasks successfully deleted."},
             status=status.HTTP_204_NO_CONTENT
         )
+
+
+class TaskListCreateAPIView(APIView):
+    """
+    TASK LIST & CREATE API VIEW
+    
+    Analogy:
+    Think of this like an office inbox. 
+    - When someone wants to see all tasks for a project (GET), the system first checks 
+      who owns the project. If it's your project, you get the list of tasks.
+    - When you drop a new task in the inbox (POST), the system ensures you're placing 
+      it into a project folder that you actually own. If you try slipping it into 
+      someone else's folder, the system rejects it!
+    """
+    
+    # We require the client request to be authenticated with a valid token.
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Handles retrieving all tasks for a specific project owned by the user.
+        """
+        # Step 1: Grab the project_id from the query parameters (e.g., ?project_id=1).
+        project_id = request.query_params.get('project_id')
+        
+        # Step 2: Validate that a project_id was actually provided.
+        if not project_id:
+            return Response(
+                {"error": "You must provide a project_id query parameter."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Step 3: Look up the project and verify the logged-in user owns it.
+        try:
+            # We filter by both id and owner. If it doesn't match both, it throws an error!
+            project = Project.objects.get(id=project_id, owner=request.user)
+        except Project.DoesNotExist:
+            return Response(
+                {"error": "Project not found, or you do not have permission to access it."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        # Step 4: Fetch all tasks belonging to this validated project.
+        tasks = Task.objects.filter(project=project)
+        
+        # Step 5: Serialize the multiple task objects into a neat JSON list.
+        serializer = TaskSerializer(tasks, many=True)
+        
+        # Step 6: Return the JSON list back to the browser!
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Handles creating a new task and assigning it to an owned project.
+        """
+        # Step 1: Feed the incoming JSON data to our TaskSerializer.
+        serializer = TaskSerializer(data=request.data)
+        
+        # Step 2: Ensure the data is valid based on our model fields.
+        serializer.is_valid(raise_exception=True)
+        
+        # Step 3: Extract the project from the validated data.
+        # The serializer stores the actual Project instance inside validated_data.
+        project = serializer.validated_data.get('project')
+        
+        # Step 4: Security check! Does the logged-in user actually own this project?
+        if project.owner != request.user:
+            return Response(
+                {"error": "You cannot add a task to a project you do not own."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Step 5: Everything is secure. Save the task to the database!
+        serializer.save()
+        
+        # Step 6: Return the new task details back to the client.
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+class TaskDetailAPIView(APIView):
+    """
+    TASK DETAIL, UPDATE & DELETE API VIEW
+    
+    Analogy:
+    Think of this view as a personal secretary for a specific task.
+    When you want to view, update, or delete a task, the secretary first 
+    checks which project this task belongs to, and then verifies if YOU 
+    are the owner of that project. If not, the secretary tells you to leave!
+    """
+    
+    # We require authentication so we know exactly who is making the request.
+    permission_classes = [IsAuthenticated]
+
+    def get_task(self, pk, user):
+        """
+        A secure helper method to retrieve a specific task while verifying 
+        that its parent project belongs to the logged-in user.
+        """
+        try:
+            # We find the task by its ID.
+            task = Task.objects.get(pk=pk)
+            
+            # Critical Security Check: We verify that the owner of the task's project
+            # matches the currently logged-in user!
+            if task.project.owner != user:
+                # If they don't match, we raise a 404 error just like if it didn't exist.
+                raise Http404("Task not found or permission denied.")
+                
+            return task
+        except Task.DoesNotExist:
+            raise Http404("Task not found.")
+
+    def get(self, request, pk):
+        """
+        Retrieves the details of a specific task securely.
+        """
+        # Step 1: Securely fetch the task using our helper method.
+        task = self.get_task(pk, request.user)
+        
+        # Step 2: Translate the task object into a JSON dictionary.
+        serializer = TaskSerializer(task)
+        
+        # Step 3: Send the JSON data back to the client.
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        """
+        Updates a task and automatically handles the completed_at timestamp.
+        """
+        # Step 1: Securely fetch the task.
+        task = self.get_task(pk, request.user)
+        
+        # Step 2: Prepare the serializer with the existing task and the new incoming data.
+        serializer = TaskSerializer(task, data=request.data, partial=True)
+        
+        # Step 3: Validate the data.
+        serializer.is_valid(raise_exception=True)
+        
+        # Step 4: Check if the status is being updated.
+        new_status = serializer.validated_data.get('status')
+        
+        if new_status:
+            # If the user is moving the task to 'done' and it wasn't already done:
+            if new_status == 'done' and task.status != 'done':
+                serializer.save(completed_at=timezone.now())
+            # If the user is changing it FROM 'done' to something else:
+            elif new_status != 'done' and task.status == 'done':
+                serializer.save(completed_at=None)
+            else:
+                # Otherwise, just save normally without touching the timestamp.
+                serializer.save()
+        else:
+            # If status isn't being updated at all, just save normally.
+            serializer.save()
+            
+        # Step 5: Return the newly updated task JSON to the frontend.
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk):
+        """
+        Deletes a specific task securely.
+        """
+        # Step 1: Securely fetch the task using our helper method.
+        task = self.get_task(pk, request.user)
+        
+        # Step 2: Delete the task from the database.
+        task.delete()
+        
+        # Step 3: Return a successful response confirming the deletion.
+        return Response(
+            {"detail": "Task successfully deleted."},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
