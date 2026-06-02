@@ -4,10 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 // Import our clean icons from lucide-react to design our layout menus.
-import { 
-  Menu, LayoutDashboard, Settings, LogOut, ChevronLeft, 
-  Milestone, Users, User, X
-} from 'lucide-react';
+import { Menu, LayoutDashboard, Settings, LogOut, ChevronLeft, Milestone, Users, User, X } from "lucide-react";
 import { cn } from '@/lib/utils';
 import Logo from '@/components/Logo';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -46,10 +43,14 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   };
 
   // Navigational items list inside our layout sidebar.
-  const navItems = useMemo(() => [
-    { label: 'Projects', href: '/dashboard', icon: <Milestone size={20} /> },
-    { label: 'Profile', href: '/dashboard/profile', icon: <User size={20} /> },
-  ], []);
+  const navItems = useMemo(
+      () => [
+          { label: "Projects", href: "/dashboard", icon: <Milestone size={20} /> },
+          { label: "Analytics", href: "/dashboard/analytics", icon: <Milestone size={20} /> },
+          { label: "Profile", href: "/dashboard/profile", icon: <User size={20} /> },
+      ],
+      [],
+  );
 
   // Footer utility links.
   const footerItems = useMemo(() => [

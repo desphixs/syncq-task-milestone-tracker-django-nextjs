@@ -26,12 +26,32 @@ export interface Task {
  * Think of this action like retrieving task cards from a project's folder.
  * It takes a project ID, validates authentication, and asks Django
  * to return all tasks that belong to that project folder.
+ * It now also takes optional filter parameters (search, priority, sorting) to refine the list.
  */
-export async function getTasksAction(projectId: string | number) {
+export async function getTasksAction(
+  projectId: string | number,
+  params?: {
+    search?: string;
+    priority?: string;
+    sort_by?: string;
+  }
+) {
   try {
-    // Send a secure GET request to the Django tracker tasks endpoint,
-    // including the project_id as a query parameter.
-    const { ok, status, data } = await apiFetch(`/tracker/tasks/?project_id=${projectId}`, {
+    // Construct the query string dynamically based on the passed parameters.
+    let url = `/tracker/tasks/?project_id=${projectId}`;
+    
+    if (params?.search) {
+      url += `&search=${encodeURIComponent(params.search)}`;
+    }
+    if (params?.priority) {
+      url += `&priority=${encodeURIComponent(params.priority)}`;
+    }
+    if (params?.sort_by) {
+      url += `&sort_by=${encodeURIComponent(params.sort_by)}`;
+    }
+
+    // Send a secure GET request to the Django tracker tasks endpoint.
+    const { ok, status, data } = await apiFetch(url, {
       method: 'GET',
       cache: 'no-store', // Bypass cache to retrieve the most up-to-date tasks list
     });

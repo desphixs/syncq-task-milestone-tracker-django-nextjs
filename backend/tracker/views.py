@@ -170,6 +170,7 @@ class TaskListCreateAPIView(APIView):
     def get(self, request):
         """
         Handles retrieving all tasks for a specific project owned by the user.
+        Includes support for search filters, priority filtering, and custom sorting.
         """
         # Step 1: Grab the project_id from the query parameters (e.g., ?project_id=1).
         project_id = request.query_params.get('project_id')
@@ -194,11 +195,33 @@ class TaskListCreateAPIView(APIView):
         # Step 4: Fetch all tasks belonging to this validated project.
         tasks = Task.objects.filter(project=project)
         
-        # Step 5: Serialize the multiple task objects into a neat JSON list.
+        # Step 5: Extract optional query parameters for search, priority, and sorting.
+        # - search: keyword to match in task titles
+        # - priority: priority level ('low', 'medium', 'high')
+        # - sort_by: field name to sort the tasks (e.g. 'due_date' or '-created_at')
+        search = request.query_params.get('search', '')
+        priority = request.query_params.get('priority', '')
+        sort_by = request.query_params.get('sort_by', '')
+        
+        # Step 6: Apply the search filter if a search term was provided.
+        # We use title__icontains to search for a partial match inside the title, case-insensitively.
+        if search:
+            tasks = tasks.filter(title__icontains=search)
+            
+        # Step 7: Apply the priority filter if a specific priority level was chosen.
+        if priority:
+            tasks = tasks.filter(priority=priority)
+            
+        # Step 8: Apply ordering logic if a sort parameter was supplied.
+        if sort_by:
+            tasks = tasks.order_by(sort_by)
+        
+        # Step 9: Serialize the multiple task objects into a neat JSON list.
         serializer = TaskSerializer(tasks, many=True)
         
-        # Step 6: Return the JSON list back to the browser!
+        # Step 10: Return the JSON list back to the browser!
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
     def post(self, request):
         """

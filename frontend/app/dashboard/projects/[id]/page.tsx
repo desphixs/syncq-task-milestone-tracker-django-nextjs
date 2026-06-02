@@ -10,7 +10,7 @@ import DashboardWrapper from '@/components/dashboard/DashboardWrapper';
 import { 
   ArrowLeft, CheckCircle2, Clock, Calendar, 
   Settings, AlertCircle, LayoutGrid, CheckSquare,
-  ListTodo, Activity, List, Plus, Trash2
+  ListTodo, Activity, List, Plus, Trash2, Search, ArrowUpDown
 } from 'lucide-react';
 // Import our Project detail server action.
 import { getProjectDetailAction } from '@/app/actions/tracker/projects';
@@ -71,42 +71,64 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   // Track which status column triggered the modal so we can pre-select it
   const [modalDefaultStatus, setModalDefaultStatus] = useState<'todo' | 'doing' | 'done'>('todo');
 
-  // Effect hook to fetch project details and tasks on component mount.
+  // State variables for search queries, priority level filters, and sort orders
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+  const [sortBy, setSortBy] = useState('');
+
+  // 1. Effect hook to fetch project details on component mount.
   useEffect(() => {
-    async function loadData() {
-      // Begin loading states
+    async function loadProjectDetails() {
       setIsLoading(true);
-      setIsLoadingTasks(true);
       setErrorMsg(null);
       
-      // Dispatch both requests in parallel to prevent request waterfalls and load pages faster!
-      const [projectResult, tasksResult] = await Promise.all([
-        getProjectDetailAction(projectId),
-        getTasksAction(projectId)
-      ]);
+      const projectResult = await getProjectDetailAction(projectId);
       
-      // Handle project details loading result
       if (projectResult.success && projectResult.project) {
         setProject(projectResult.project);
       } else {
-        // Set error message if the workspace doesn't exist or belongs to another user.
         setErrorMsg(projectResult.message || "Failed to load project details.");
       }
-
-      // Handle tasks loading result
-      if (tasksResult.success && tasksResult.tasks) {
-        setTasks(tasksResult.tasks);
-      }
-      
-      // Stop loading states
       setIsLoading(false);
-      setIsLoadingTasks(false);
     }
     
     if (projectId) {
-      loadData();
+      loadProjectDetails();
     }
   }, [projectId]);
+
+  // 2. Debounce the search query to prevent spamming backend requests on every single keystroke.
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400); // Wait for 400ms of user silence before triggering the backend search
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchQuery]);
+
+  // 3. Helper function to fetch tasks from the backend database with all current filters applied.
+  const loadTasks = React.useCallback(async () => {
+    setIsLoadingTasks(true);
+    const result = await getTasksAction(projectId, {
+      search: debouncedSearchQuery,
+      priority: priorityFilter,
+      sort_by: sortBy
+    });
+    if (result.success && result.tasks) {
+      setTasks(result.tasks);
+    }
+    setIsLoadingTasks(false);
+  }, [projectId, debouncedSearchQuery, priorityFilter, sortBy]);
+
+  // 4. Effect hook to trigger tasks fetching whenever filters, search terms, or sort choices change.
+  useEffect(() => {
+    if (projectId) {
+      loadTasks();
+    }
+  }, [projectId, debouncedSearchQuery, priorityFilter, sortBy, loadTasks]);
 
   // Trigger our smooth progress bar animation once the project is successfully loaded!
   useEffect(() => {
@@ -155,6 +177,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     if (projectResult.success && projectResult.project) {
       setProject(projectResult.project);
     }
+
+    // Refresh tasks to ensure any applied sorting and filtering is respected
+    loadTasks();
   };
 
   // Toggles task completion. Checking the box moves to 'done', unchecking moves to 'todo'.
@@ -176,6 +201,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       if (projectResult.success && projectResult.project) {
         setProject(projectResult.project);
       }
+      
+      // Refresh tasks list with active search/filters
+      loadTasks();
     } else {
       // Rollback optimistic state changes if the request failed
       setTasks(backupTasks);
@@ -201,6 +229,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       if (projectResult.success && projectResult.project) {
         setProject(projectResult.project);
       }
+
+      // Refresh tasks list with active search/filters
+      loadTasks();
     } else {
       // Revert changes on backend save failure
       setTasks(backupTasks);
@@ -231,6 +262,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       if (projectResult.success && projectResult.project) {
         setProject(projectResult.project);
       }
+
+      // Refresh tasks list with active search/filters
+      loadTasks();
     } else {
       // Revert to backup tasks list if backend deletion fails
       setTasks(backupTasks);
@@ -478,6 +512,61 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <List size={13} />
                     <span>List View</span>
                   </button>
+                </div>
+              </div>
+
+              {/* Modern Task Filter Bar */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-zinc-50/50 dark:bg-zinc-950/10 p-4 rounded-3xl border border-zinc-200/60 dark:border-zinc-850/80">
+                {/* Search Keyword Input */}
+                <div className="relative flex-1 max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-zinc-400 dark:text-zinc-500">
+                    <Search size={15} />
+                  </div>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search tasks by keyword..."
+                    className="w-full pl-10 pr-4 py-2 text-xs font-bold bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl placeholder-zinc-400 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-650 transition-colors"
+                  />
+                </div>
+
+                {/* Dropdown Select Filters */}
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Priority Filter */}
+                  <div className="relative flex items-center bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl px-3 py-1.5">
+                    <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase mr-2">
+                      Priority:
+                    </span>
+                    <select
+                      value={priorityFilter}
+                      onChange={(e) => setPriorityFilter(e.target.value)}
+                      className="text-xs font-bold bg-transparent border-none outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 pr-1 select-none"
+                    >
+                      <option value="">All Priorities</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+
+                  {/* Sorting Order Filter */}
+                  <div className="relative flex items-center bg-white dark:bg-zinc-900 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl px-3 py-1.5">
+                    <div className="text-zinc-400 dark:text-zinc-500 mr-2 shrink-0">
+                      <ArrowUpDown size={13} />
+                    </div>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="text-xs font-bold bg-transparent border-none outline-none cursor-pointer text-zinc-700 dark:text-zinc-300 pr-1 select-none"
+                    >
+                      <option value="">Sort by: Default</option>
+                      <option value="due_date">Due Date (Soonest)</option>
+                      <option value="-due_date">Due Date (Latest)</option>
+                      <option value="-created_at">Newest Created</option>
+                      <option value="created_at">Oldest Created</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
