@@ -1,128 +1,115 @@
-# Django + Next.js Boilerplate
+# Syncq: Task and Milestone Tracker
 
-**The foundation for real world fullstack applications.**
+Syncq is a private project management and milestone tracking system designed to give users complete control over their tasks. It provides a sleek, modern workspace where users can create projects, outline specific task lists, set priority tags, and monitor overall progress with visual milestone indicators. The application is built with security at its core, enforcing strict backend data isolation to guarantee that every user's workspace remains completely private and locked down from others.
 
-This boilerplate is a production-ready, batteries-included starter kit designed to bridge the gap between **Django’s** robust backend capabilities and **Next.js’s** unparalleled frontend performance. From comprehensive authentication flows to automated developer workflows, everything is pre-configured.
-
----
-
-## Key Features
-
-### 🔐 Advanced Authentication System
-
-A complete, secure, and flexible auth system out of the box:
-
-- **Traditional:** Email & Password login with robust validation.
-- **Social Auth:** Seamless integration with **GitHub** and **Google**.
-- **Passwordless:** Magic Link and OTP (One-Time Password) login support.
-- **Security:** Password reset and password change workflows pre-built.
-- **Account Management:** Profile updates, account settings, and avatar management.
-
-### 🎨 Frontend & UI/UX
-
-- **Next.js Architecture:** Optimized for speed and SEO.
-- **Auth Context:** Global authentication state management.
-- **Theming:** Full **Dark/Light Mode** support powered by Tailwind CSS.
-- **Responsive Design:** Fully mobile-responsive profile and settings pages.
-
-### ⚙️ Backend & Infrastructure
-
-- **Django Core:** Clean architecture with a focus on scalability.
-- **Email System:** Fully wired-in SMTP configuration for transactional emails (Reset links, OTPs, etc.).
-- **API Ready:** Structured to communicate effortlessly with the Next.js frontend.
-
-### 🛠️ Developer Experience (DX)
-
-Custom automation scripts to speed up your workflow:
-
-- `g.bat`: Automated GitHub commit and push workflow.
-- `menu.bat`: A custom CLI menu to manage Django commands (Runserver, Migrations, Shell, etc.).
+This application is designed as an educational project featured on [staqed.com](https://staqed.com), the premier platform where you can learn to build real-world, industry-standard full-stack web applications from scratch.
 
 ---
 
-## 🛠️ Tech Stack
+## Technical Stack
 
-| Layer        | Technology                       |
-| ------------ | -------------------------------- |
-| **Backend**  | Django                           |
-| **Frontend** | Next.js, React                   |
-| **Styling**  | Tailwind CSS                     |
-| **Database** | PostgreSQL (or SQLite for local) |
-| **State**    | React Context API                |
-| **Scripts**  | Batch (.bat) for Windows         |
+The architecture separates the frontend and backend to demonstrate modern production design:
+
+- **Backend:** Python and Django with Django REST Framework (DRF) for hand-crafted RESTful API endpoints.
+- **Database:** SQLite for lightweight and robust relational data storage.
+- **Frontend:** Next.js (App Router) with TypeScript for highly optimized client-side pages and server actions.
+- **Styling & UI:** Tailwind CSS for a modern, responsive, utility-first user interface and Lucide React for consistent iconography.
 
 ---
 
-## 🚀 Getting Started
+## Core Application Features
 
-### 1. Clone the repository
+- **Authentication System:** Pre-built traditional credential login, social auth integrations (Google and GitHub), and passwordless flow templates.
+- **Workspace Project CRUD:** Create, list, edit, and safely delete user-owned projects and client workspaces.
+- **Task Kanban Boards:** Create, update, and manage tasks organized by columns representing "To Do", "Doing", and "Done" states.
+- **Computed Milestone Progress:** Dynamic progress metrics generated directly by the backend to calculate completion rates and percentage indicators.
+- **Advanced Metrics Analytics:** Dedicated analytics views calculating project counts, pending tasks, priority levels, and upcoming or overdue deadlines.
+- **Sorting, Filtering, and Search:** Query tasks dynamically on the backend by status, urgency priority, deadline date, and search keywords.
+- **Theme Integration:** Clean, elegant dark and light mode UI matching premium design standards.
 
-```bash
-git clone https://github.com/desphixs/Staqed-Django-and-Next.js-Boilerplate
-cd your-repo-name
+---
 
+## Project Structure
+
+```text
+synced/
+├── backend/            # Django REST API (endpoints, tracker app, models, userauths)
+├── frontend/           # Next.js App Router (dashboard, projects pages, UI components)
+└── docs/               # Detailed study plans and tasks for the building process
 ```
+
+---
+
+## Getting Started
+
+### 1. Prerequisites
+
+Make sure you have the following installed on your machine:
+
+- Python 3.12+
+- Node.js 18+ & npm
 
 ### 2. Backend Setup
 
-1. Create a virtual environment: `python -m venv venv`
-2. Activate it: `venv\Scripts\activate`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Configure your `.env` file (see `.env.template`).
-5. Run migrations: `python manage.py migrate`
+1. Navigate to the backend folder:
+    ```bash
+    cd backend
+    ```
+2. Create and activate a Python virtual environment:
+    ```bash
+    python -m venv venv
+    # On Windows:
+    .\venv\Scripts\activate
+    # On macOS/Linux:
+    source venv/bin/activate
+    ```
+3. Install the required Python packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4. Create your local environment file:
+    - Copy `.env.template` to `.env`.
+    - Configure the default development variables.
+5. Run migrations to initialize the database:
+    ```bash
+    python manage.py migrate
+    ```
+6. Start the Django development server (default port `8000`):
+    ```bash
+    python manage.py runserver
+    ```
 
 ### 3. Frontend Setup
 
-1. Navigate to the frontend folder: `cd frontend`
-2. Install dependencies: `npm install`
-3. Start the development server: `npm run dev`
+1. Navigate to the frontend folder:
+    ```bash
+    cd ../frontend
+    ```
+2. Install the node packages:
+    ```bash
+    npm install
+    ```
+3. Create your local environment file:
+    - Copy `.env.template` to `.env.local`.
+    - Configure the API base URLs to point to your backend.
+4. Start the Next.js development server (default port `3000`):
+    ```bash
+    npm run dev
+    ```
+
+Now open your browser and navigate to `http://localhost:3000` to interact with the full application!
 
 ---
 
-## ⌨️ Automation Scripts
+## Learning Goals on Staqed
 
-This boilerplate includes custom Windows batch scripts to streamline your development:
+While building Syncq on [staqed.com](https://staqed.com), you will master:
 
-### **The Django Menu**
-
-Instead of remembering long commands, run:
-
-```bash
-.\menu.bat
-
-```
-
-_Gives you quick access to migrations, superuser creation, and starting the server._
-
-### **One-Click Commits**
-
-To push your changes to GitHub instantly:
-
-```bash
-.\g.bat "Your commit message here"
-
-```
-
-## 📝 Versioning
-
-**Current Version:** `1.0.0` (Initial Release)
+1. **Relational State and Ownership:** Connecting custom models (User, Project, and Task) through ForeignKey relationships, establishing strict cascade deletion logic, and performing reverse ORM queries.
+2. **Absolute Data Isolation:** Implementing secure API views that manually filter and validate database records based on the authenticated requesting user, ensuring data isolation across the entire API gateway.
+3. **Explicit DRF Handlers:** Developing clean backend API views and serializers that handle inputs step-by-step, avoiding hidden magic decoders so the full data flow is clear and readable.
+4. **Interactive UI Integration:** Linking a dynamic Next.js App Router frontend with Django REST API, managing local React state, rendering premium grid components, and providing custom success toasts and loading skeletons.
 
 ---
 
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
-
-## 📄 License
-
-This project is [MIT](https://choosealicense.com/licenses/mit/) licensed.
-
----
-
-**Built with ❤️ for developers who want to move fast**
-
----
-
-**Sponsored by [Staqed](https://staqed.com)**
-
-#### v.10
+_This project is part of the full-stack developer path on [staqed.com](https://staqed.com)._

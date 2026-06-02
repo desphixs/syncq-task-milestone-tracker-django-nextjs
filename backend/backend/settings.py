@@ -60,6 +60,9 @@ INSTALLED_APPS = [
 
     # Handles sending emails through external providers like Resend
     'anymail',
+
+    # Register our private task and milestone tracker application!
+    'tracker',
 ]
 
 # The Middleware acts like a series of security bouncers standing in a hallway.
