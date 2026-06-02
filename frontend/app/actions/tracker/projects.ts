@@ -84,3 +84,46 @@ export async function createProjectAction(payload: {
         };
     }
 }
+
+/**
+ * GET PROJECT DETAIL SERVER ACTION
+ * 
+ * Analogy:
+ * Think of this action like a secure courier sent to fetch one specific private drawer inside the vault.
+ * The courier carries the unique drawer ID, presents the user's secret keys (cookies) for validation,
+ * and retrieves the detailed folder containing project metadata and dynamically computed milestone statistics.
+ * If the user does not own this folder, the vault guards block access and return a secure 404 response.
+ */
+export async function getProjectDetailAction(id: string | number) {
+    try {
+        // Step 1: Send a secure GET request to the single project detail endpoint in Django.
+        // We interpolate the dynamic project ID directly into our REST API route path!
+        const { ok, status, data } = await apiFetch(`/tracker/projects/${id}/`, {
+            method: 'GET',
+            cache: 'no-store', // Always bypass cache to load the latest dynamic progress statistics!
+        });
+
+        // Step 2: Check if Django responded with a successful status code.
+        if (ok) {
+            return {
+                success: true,
+                message: "Project details retrieved successfully.",
+                project: data,
+            };
+        } else {
+            // Step 3: If Django returned a 404 or other error, return it with a clear explanation message.
+            return {
+                success: false,
+                message: data.message || data.detail || "Failed to retrieve project details.",
+                status,
+            };
+        }
+    } catch (error: any) {
+        // Step 4: Handle standard network connectivity or offline connection errors gracefully.
+        return {
+            success: false,
+            message: `Network error: ${error.message || 'Failed to connect to backend server.'}`,
+        };
+    }
+}
+
