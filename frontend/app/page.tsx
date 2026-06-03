@@ -37,7 +37,7 @@ export default function Home() {
 
                     {/* Main Headline explaining the tool's goal */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.1]">
-                        Keep your projects & tasks <br />
+                        Keep your projects <br />
                         <span className="bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">
                             in perfect sync
                         </span>
