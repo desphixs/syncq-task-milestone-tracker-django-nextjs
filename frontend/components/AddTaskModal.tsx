@@ -135,7 +135,7 @@ export default function AddTaskModal({
               placeholder="e.g. Set up API routing rules"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all placeholder:text-zinc-400"
+              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all placeholder:text-zinc-400"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function AddTaskModal({
               placeholder="Write target details or goals for this milestone..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all placeholder:text-zinc-450 resize-none"
+              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all placeholder:text-zinc-450 resize-none"
             />
           </div>
 
@@ -189,7 +189,7 @@ export default function AddTaskModal({
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-zinc-950 dark:focus:ring-white transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm text-zinc-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 focus:border-indigo-500 dark:focus:border-indigo-400 transition-all"
             />
           </div>
 
@@ -205,7 +205,7 @@ export default function AddTaskModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 disabled:opacity-50 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer inline-flex items-center gap-1.5"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white hover:opacity-90 disabled:opacity-50 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition-all cursor-pointer inline-flex items-center gap-1.5"
             >
               {isSubmitting ? (
                 <>

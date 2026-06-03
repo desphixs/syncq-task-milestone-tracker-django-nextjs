@@ -153,7 +153,7 @@ export default function UserProfilePage() {
                     {/* Left Column: Avatar & Quick Stats Card */}
                     <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/40 p-6 flex flex-col items-center justify-center text-center space-y-4 shadow-sm h-fit">
                         {/* Styled Avatar image container with dynamic fallback routing */}
-                        {profile.avatar ? <img src={profile.avatar} alt={profile.full_name || "User Avatar"} className="w-24 h-24 rounded-3xl object-cover border border-zinc-200 dark:border-zinc-700 shadow-lg" /> : <div className="w-24 h-24 rounded-3xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center text-3xl font-black shadow-lg border border-zinc-250 dark:border-zinc-700">{getInitials(profile.full_name)}</div>}
+                        {profile.avatar ? <img src={profile.avatar} alt={profile.full_name || "User Avatar"} className="w-24 h-24 rounded-3xl object-cover border border-zinc-200 dark:border-zinc-700 shadow-lg" /> : <div className="w-24 h-24 rounded-3xl bg-indigo-600 dark:bg-indigo-500 text-white flex items-center justify-center text-3xl font-black shadow-lg border border-indigo-150 dark:border-indigo-700">{getInitials(profile.full_name)}</div>}
 
                         <div className="space-y-1">
                             <h3 className="text-lg font-black text-zinc-950 dark:text-white">{profile.full_name || "Anonymous Coder"}</h3>
@@ -162,7 +162,7 @@ export default function UserProfilePage() {
 
                         {/* Display Admin role tag dynamically if using staff status or specific configuration */}
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-zinc-900 dark:text-zinc-100 bg-zinc-150 dark:bg-zinc-800 px-3 py-1 rounded-full uppercase tracking-wider">
-                            <ShieldCheck size={12} className="text-emerald-500" /> Authorized User
+                            <ShieldCheck size={12} className="text-indigo-500" /> Authorized User
                         </span>
 
                         <div className="w-full border-t border-zinc-100 dark:border-zinc-800/80 pt-4 flex justify-around text-zinc-500 text-xs">

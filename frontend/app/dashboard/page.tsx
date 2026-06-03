@@ -135,7 +135,7 @@ export default function DashboardOverviewPage() {
           {/* Elegant dialog modal trigger button */}
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white hover:opacity-90 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer shrink-0"
           >
             <Plus size={16} />
             <span>New Project</span>
@@ -243,7 +243,7 @@ export default function DashboardOverviewPage() {
             </div>
             <button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-4 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 cursor-pointer shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:opacity-90 cursor-pointer shadow-sm"
             >
               Build Your First Project
             </button>
@@ -355,7 +355,7 @@ export default function DashboardOverviewPage() {
                     placeholder="e.g. Website Branding Audit"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-zinc-950 dark:focus:border-white transition-colors"
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 transition-colors"
                   />
                 </div>
 
@@ -370,7 +370,7 @@ export default function DashboardOverviewPage() {
                     placeholder="Describe the scope or goals of this client workspace..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-zinc-950 dark:focus:border-white transition-colors resize-none"
+                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 transition-colors resize-none"
                   />
                 </div>
 
@@ -384,7 +384,7 @@ export default function DashboardOverviewPage() {
                       id="status"
                       value={status}
                       onChange={(e) => setStatus(e.target.value as any)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-zinc-950 dark:focus:border-white transition-colors cursor-pointer"
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 transition-colors cursor-pointer"
                     >
                       <option value="planning">Planning</option>
                       <option value="active">Active</option>
@@ -404,7 +404,7 @@ export default function DashboardOverviewPage() {
                       type="date"
                       value={dueDate}
                       onChange={(e) => setDueDate(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-zinc-950 dark:focus:border-white transition-colors cursor-pointer"
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-transparent text-sm focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/20 transition-colors cursor-pointer"
                     />
                   </div>
                 </div>
@@ -421,7 +421,7 @@ export default function DashboardOverviewPage() {
                   <button 
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex items-center justify-center gap-2 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-60"
+                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white hover:opacity-90 px-4 py-2.5 rounded-xl font-bold text-xs shadow-md transition-all cursor-pointer disabled:opacity-60"
                   >
                     {isSubmitting ? (
                       <>

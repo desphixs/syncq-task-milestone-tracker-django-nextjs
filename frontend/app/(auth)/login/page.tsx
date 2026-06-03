@@ -336,8 +336,9 @@ export default function LoginPage() {
         
         {/* Header branding */}
         <div className="text-center space-y-2 mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-zinc-950 dark:bg-zinc-50 text-white dark:text-zinc-950 font-bold text-xl mb-1 shadow-md">
-            <Shield className="w-6 h-6" />
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-bold text-xl mb-1 shadow-md border border-indigo-100 dark:border-indigo-900/30">
+            {/* Display the Synced brand logo icon in the login card header */}
+            <img src="https://cdn-icons-png.flaticon.com/128/11243/11243780.png" alt="Synced Logo" className="w-6 h-6 object-contain" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
             Welcome Back
@@ -354,7 +355,7 @@ export default function LoginPage() {
               onClick={() => { setMethod('password'); }}
               className={`flex-1 rounded-lg py-2 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 method === 'password'
-                  ? 'bg-white dark:bg-white text-zinc-950 dark:text-zinc-950 shadow-sm'
+                  ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
               }`}
             >
@@ -364,7 +365,7 @@ export default function LoginPage() {
               onClick={() => { setMethod('magic_link'); }}
               className={`flex-1 rounded-lg py-2 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 method === 'magic_link'
-                  ? 'bg-white dark:bg-white text-zinc-950 dark:text-zinc-950 shadow-sm'
+                  ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
               }`}
             >
@@ -374,7 +375,7 @@ export default function LoginPage() {
               onClick={() => { setMethod('otp'); }}
               className={`flex-1 rounded-lg py-2 text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer ${
                 method === 'otp'
-                  ? 'bg-white dark:bg-white text-zinc-950 dark:text-zinc-950 shadow-sm'
+                  ? 'bg-white dark:bg-zinc-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
               }`}
             >
@@ -407,8 +408,8 @@ export default function LoginPage() {
                   aria-invalid={passwordForm.formState.errors.email ? 'true' : 'false'}
                   className={`w-full pl-10 pr-4 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none
                     ${passwordForm.formState.errors.email 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/30' 
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-955 dark:focus:border-zinc-200 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30'
+                      ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-955/30' 
+                      : 'border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/30'
                     }`}
                 />
               </div>
@@ -447,8 +448,8 @@ export default function LoginPage() {
                   aria-invalid={passwordForm.formState.errors.password ? 'true' : 'false'}
                   className={`w-full pl-10 pr-10 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none
                     ${passwordForm.formState.errors.password 
-                      ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-950/30' 
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-900 dark:focus:border-zinc-100 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30'
+                      ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-100 dark:focus:ring-red-955/30' 
+                      : 'border-zinc-200 dark:border-zinc-800 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/30'
                     }`}
                 />
                 <button
@@ -470,7 +471,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+              className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
               {isSubmitting ? (
                 <>
@@ -503,7 +504,7 @@ export default function LoginPage() {
                       {...emailForm.register('email')}
                       type="email"
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none focus:border-zinc-900 dark:focus:border-zinc-200 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/30"
                     />
                   </div>
                   {emailForm.formState.errors.email && (
@@ -514,7 +515,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -528,7 +529,7 @@ export default function LoginPage() {
               </form>
             ) : (
               <div className="py-4 text-center space-y-4">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/50">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100 dark:border-indigo-900/30">
                   <Mail className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
@@ -563,7 +564,7 @@ export default function LoginPage() {
                       {...emailForm.register('email')}
                       type="email"
                       placeholder="you@example.com"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none focus:border-zinc-900 dark:focus:border-zinc-200 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white text-sm font-medium transition-all duration-200 outline-none focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/30"
                     />
                   </div>
                   {emailForm.formState.errors.email && (
@@ -574,7 +575,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
+                  className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -613,7 +614,7 @@ export default function LoginPage() {
                       value={digit}
                       onChange={(e) => handleOtpChange(e.target.value, idx)}
                       onKeyDown={(e) => handleOtpKeyDown(e, idx)}
-                      className="w-12 h-14 text-center text-xl font-bold rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white focus:border-zinc-950 dark:focus:border-zinc-50 focus:ring-2 focus:ring-zinc-100 dark:focus:ring-zinc-900/30 outline-none transition-all duration-200"
+                      className="w-12 h-14 text-center text-xl font-bold rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950/30 outline-none transition-all duration-200"
                     />
                   ))}
                 </div>
@@ -640,7 +641,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full h-12 rounded-xl bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-black font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
+                    className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
                   >
                     {isSubmitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

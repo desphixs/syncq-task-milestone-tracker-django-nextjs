@@ -120,7 +120,7 @@ export default function SettingsPage() {
               className={cn(
                 "flex items-center gap-2 px-6 py-4 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap",
                 activeTab === tab.id 
-                  ? "border-black dark:border-white text-black dark:text-white" 
+                  ? "border-indigo-650 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400" 
                   : "border-transparent text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-300"
               )}
             >
@@ -213,7 +213,7 @@ function GeneralSettingsTab({ profile, onRefresh }: GeneralSettingsTabProps) {
               disabled={isUpdatingNotify}
               onChange={(e) => handleToggleEmail(e.target.checked)}
             />
-            <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-black"></div>
+            <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 dark:peer-checked:after:bg-zinc-950"></div>
           </label>
         </div>
 
@@ -234,7 +234,7 @@ function GeneralSettingsTab({ profile, onRefresh }: GeneralSettingsTabProps) {
               disabled={isUpdatingPublic}
               onChange={(e) => handleTogglePublic(e.target.checked)}
             />
-            <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white dark:peer-checked:after:bg-black"></div>
+            <div className="w-10 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 dark:peer-checked:after:bg-zinc-950"></div>
           </label>
         </div>
       </div>
@@ -469,7 +469,7 @@ function ProfileSettingsTab({ profile, onRefresh }: ProfileSettingsTabProps) {
             {!avatarPreview && !isUploadingAvatar && (
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-lg border-2 border-white dark:border-zinc-950 transition-transform hover:scale-110 cursor-pointer"
+                className="absolute -bottom-2 -right-2 p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg border-2 border-white dark:border-zinc-900 transition-transform hover:scale-110 cursor-pointer"
               >
                 <Camera size={14} />
               </button>
@@ -536,7 +536,7 @@ function ProfileSettingsTab({ profile, onRefresh }: ProfileSettingsTabProps) {
         <button 
           onClick={handleSave}
           disabled={isSaving}
-          className="px-6 py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
+          className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold hover:shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center gap-2"
         >
           {isSaving ? "Saving..." : "Save Profile Details"}
         </button>
@@ -710,7 +710,7 @@ function PasswordSettingsTab() {
         <button 
           onClick={handleUpdate}
           disabled={isSaving}
-          className="mt-2 w-full px-6 py-2.5 rounded-xl bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          className="mt-2 w-full px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold hover:shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSaving ? (
             <>

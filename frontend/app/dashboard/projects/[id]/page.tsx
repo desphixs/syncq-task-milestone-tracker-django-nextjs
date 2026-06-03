@@ -318,7 +318,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </div>
             <Link 
               href="/dashboard"
-              className="bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white hover:opacity-90 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all cursor-pointer inline-flex items-center gap-2"
             >
               <LayoutGrid size={14} />
               <span>Return to Workspaces</span>
@@ -729,7 +729,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                               onClick={() => setActiveListTab(tab)}
                               className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all cursor-pointer ${
                                 activeListTab === tab
-                                  ? 'bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 shadow-md'
+                                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md'
                                   : 'bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
                               }`}
                             >
@@ -748,7 +748,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         {/* Direct Add Task trigger */}
                         <button
                           onClick={() => openAddTaskModal('todo')}
-                          className="bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 hover:opacity-90 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white hover:opacity-90 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                         >
                           <Plus size={14} />
                           <span>Add Task</span>
